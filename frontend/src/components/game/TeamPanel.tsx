@@ -194,17 +194,18 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
               Team Members
             </h4>
             <div className="space-y-1">
-              {team.members
-                .filter((member) => member.trim() !== "")
-                .map((member, idx) => (
-                  <div
-                    key={idx}
-                    className="text-xs glass-card p-1 flex items-center gap-1"
-                  >
-                    {idx === 0 && <span className="text-yellow-400">👑</span>}
-                    {member}
-                  </div>
-                ))}
+            {team.members
+  .filter((member) => member.trim() !== "")
+  .map((member, idx) => (
+    <div
+      key={member} // ✅ FIXED
+      className="text-xs glass-card p-1 flex items-center gap-1"
+    >
+      {idx === 0 && <span className="text-yellow-400">👑</span>}
+      {member}
+    </div>
+))}
+
             </div>
           </div>
         )}

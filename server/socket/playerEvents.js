@@ -2,6 +2,7 @@ const {
   getGame,
   getPlayer,
   updatePlayer,
+  updateGame,
   submitAnswer,
   advanceGameState,
   getCurrentQuestion,
@@ -79,132 +80,226 @@ function setupPlayerEvents(socket, io) {
   });
 
   // UPDATED: Submit answer with SINGLE ATTEMPT system
-  socket.on("submit-answer", (data) => {
-    const { gameCode, playerId, answer } = data;
-    const game = getGame(gameCode);
-    const player = getPlayer(playerId);
+// UPDATED: Submit answer with SINGLE ATTEMPT system
+socket.on("submit-answer", (data) => {
+  const { gameCode, playerId, answer } = data;
+  const game = getGame(gameCode);
+  const player = getPlayer(playerId);
 
-    console.log(
-      `📝 Single attempt answer submitted: "${answer}" by ${player?.name} in game ${gameCode}`
-    );
+  if (!game || !player || game.status !== "active") {
+    socket.emit("answer-rejected", {
+      reason: "invalid-state",
+      message: "Cannot submit answer - invalid game state",
+    });
+    return;
+  }
 
-    if (game && game.status === "active" && player && player.teamId) {
-      // Check if it's this player's team's turn
-      const playerTeam = game.teams.find((t) => t.id === player.teamId);
-      if (!playerTeam || !playerTeam.active) {
-        console.log(`❌ Not ${player.name}'s team turn`);
-        socket.emit("answer-rejected", {
-          reason: "not-your-turn",
-          message: "It's not your team's turn to answer",
-        });
-        return;
-      }
+  const currentRound = game.currentRound ?? 1;
 
-      // Submit the answer - this will handle the single-attempt logic
-      const result = submitAnswer(gameCode, playerId, answer);
+  // ✅ TOSS-UP ROUND (Round 0)
+  if (currentRound === 0) {
+    if (!game.tossUpAnswers) game.tossUpAnswers = [];
+    if (!game.tossUpSubmittedTeams) game.tossUpSubmittedTeams = [];
+    if (!game.buzzOrder) game.buzzOrder = [];
 
-      if (!result.success) {
-        console.log(`❌ Answer submission failed: ${result.message}`);
-        socket.emit("answer-rejected", {
-          reason: "submission-failed",
-          message: result.message,
-        });
-        return;
-      }
+    const teamId = player.teamId;
 
-      // STEP 1: Immediately emit the result
-      if (result.isCorrect) {
-        // Correct answer - reveal the correct card immediately
-        io.to(gameCode).emit("answer-correct", {
-          playerName: result.playerName,
-          teamName: result.teamName,
-          teamId: result.teamId,
-          answer: result.matchingAnswer,
-          pointsAwarded: result.pointsAwarded,
-          game: result.game,
-          submittedText: answer,
-          singleAttempt: true,
-        });
-
-        console.log(
-          `✅ ${result.playerName} answered correctly: +${result.pointsAwarded} points. Correct card revealed!`
-        );
-
-        // STEP 2: After 2 seconds, reveal remaining cards
-        if (result.revealRemainingAfterDelay) {
-          setTimeout(() => {
-            console.log(`⏰ 2 seconds elapsed, revealing remaining cards...`);
-
-            // Get updated game and reveal remaining cards
-            const updatedGame = getGame(gameCode);
-            const currentQuestion = getCurrentQuestion(updatedGame);
-
-            if (currentQuestion) {
-              // Reveal all remaining unrevealed cards
-              currentQuestion.answers.forEach(answer => {
-                answer.revealed = true;
-              });
-
-              io.to(gameCode).emit("remaining-cards-revealed", {
-                game: updatedGame,
-                currentQuestion: currentQuestion,
-              });
-
-              console.log(`👁️ Remaining cards revealed after correct answer`);
-            }
-
-            // STEP 3: After revealing remaining cards, advance game state (3 more seconds)
-            setTimeout(() => {
-              console.log(`⏰ Additional 3 seconds elapsed, advancing game state...`);
-
-              const advancedGame = advanceGameState(gameCode);
-              if (!advancedGame) {
-                console.log(`❌ Failed to advance game state for ${gameCode}`);
-                return;
-              }
-
-              handleGameStateAdvancement(gameCode, advancedGame, io, result);
-            }, 3000); // 3 second delay after revealing remaining cards
-          }, 2000); // 2 second delay to reveal remaining cards
-        }
-      } else {
-        // Wrong answer - all cards already revealed immediately
-        io.to(gameCode).emit("answer-incorrect", {
-          playerName: result.playerName,
-          teamName: result.teamName,
-          teamId: result.teamId,
-          submittedText: answer,
-          game: result.game,
-          message: `Wrong answer. All cards revealed.`,
-          singleAttempt: true,
-          allCardsRevealed: true,
-        });
-
-        console.log(
-          `❌ ${result.playerName} answered incorrectly: All cards revealed immediately`
-        );
-
-        // STEP 2: After 3 seconds, advance game state
-        setTimeout(() => {
-          console.log(`⏰ 3 seconds elapsed after wrong answer, advancing game state...`);
-
-          const advancedGame = advanceGameState(gameCode);
-          if (!advancedGame) {
-            console.log(`❌ Failed to advance game state for ${gameCode}`);
-            return;
-          }
-
-          handleGameStateAdvancement(gameCode, advancedGame, io, result);
-        }, 3000); // 3 second delay
-      }
-    } else {
-      console.log(`❌ Answer submission failed: Invalid game state or player`);
+    if (game.tossUpSubmittedTeams.includes(teamId)) {
       socket.emit("answer-rejected", {
-        reason: "invalid-state",
-        message: "Cannot submit answer - invalid game state",
+        reason: "already-answered",
+        message: "Your team has already answered the toss-up round.",
+      });
+      return;
+    }
+
+    const result = submitAnswer(gameCode, playerId, answer);
+    if (!result.success) {
+      socket.emit("answer-rejected", {
+        reason: "submission-failed",
+        message: result.message,
+      });
+      return;
+    }
+
+    game.tossUpSubmittedTeams.push(teamId);
+    game.tossUpAnswers.push({
+      teamId,
+      teamName: result.teamName,
+      score: result.pointsAwarded,
+      playerName: result.playerName,
+      answer: result.matchingAnswer,
+      submittedText: answer,
+    });
+
+    // Emit answer result
+    if (result.isCorrect) {
+      io.to(gameCode).emit("answer-correct", {
+        ...result,
+        submittedText: answer,
+        singleAttempt: true,
+      });
+    } else {
+      io.to(gameCode).emit("answer-incorrect", {
+        ...result,
+        submittedText: answer,
+        singleAttempt: true,
+        allCardsRevealed: false,
       });
     }
+
+    // ✅ Both teams have answered — reveal and decide winner
+    if (game.tossUpSubmittedTeams.length === 2) {
+      setTimeout(() => {
+        const currentQuestion = getCurrentQuestion(game);
+        if (currentQuestion) {
+          currentQuestion.answers.forEach((a) => (a.revealed = true));
+          io.to(gameCode).emit("remaining-cards-revealed", {
+            game,
+            currentQuestion,
+          });
+        }
+
+        const [answer1, answer2] = game.tossUpAnswers;
+        let winnerTeamId = null;
+
+        if (answer1.score > answer2.score) {
+          winnerTeamId = answer1.teamId;
+        } else if (answer2.score > answer1.score) {
+          winnerTeamId = answer2.teamId;
+        } else {
+          winnerTeamId = game.buzzOrder?.[0]; // Tie → use buzz order
+        }
+
+        game.teams.forEach((t) => {
+          t.active = t.id === winnerTeamId;
+        });
+
+        io.to(gameCode).emit("round-complete", {
+          round: 0,
+          tossUpAnswers: game.tossUpAnswers,
+          winnerTeamId,
+        });
+
+        console.log(`🏆 Toss-up round winner: ${winnerTeamId}`);
+      }, 2000);
+    } else {
+      // ✅ Switch turn to the other team (buzzer logic)
+      const [teamA, teamB] = game.teams;
+      const otherTeamId = teamA.id === teamId ? teamB.id : teamA.id;
+
+      game.buzzedTeamId = otherTeamId;
+      game.activeTeamId = otherTeamId;
+      game.teams.forEach((t) => (t.active = t.id === otherTeamId));
+      game.gameState.inputEnabled = true;
+
+      io.to(gameCode).emit("onPlayerBuzzed", {
+        game,
+        playerId: null,
+        teamId: otherTeamId,
+      });
+
+      io.to(gameCode).emit("team-switched", {
+        currentTeamId: game.activeTeamId,
+      });
+
+      console.log(`🔁 Switching to Team ${otherTeamId}`);
+    }
+
+    updateGame(gameCode, game);
+    return;
+  }
+
+  // ✅ REGULAR ROUNDS
+  const playerTeam = game.teams.find((t) => t.id === player.teamId);
+  if (!playerTeam || !playerTeam.active) {
+    socket.emit("answer-rejected", {
+      reason: "not-your-turn",
+      message: "It's not your team's turn to answer",
+    });
+    return;
+  }
+
+  const result = submitAnswer(gameCode, playerId, answer);
+
+  if (!result.success) {
+    socket.emit("answer-rejected", {
+      reason: "submission-failed",
+      message: result.message,
+    });
+    return;
+  }
+
+  if (result.isCorrect) {
+    io.to(gameCode).emit("answer-correct", {
+      ...result,
+      submittedText: answer,
+      singleAttempt: true,
+    });
+
+    if (result.revealRemainingAfterDelay) {
+      setTimeout(() => {
+        const updatedGame = getGame(gameCode);
+        const currentQuestion = getCurrentQuestion(updatedGame);
+        if (currentQuestion) {
+          currentQuestion.answers.forEach((a) => (a.revealed = true));
+          io.to(gameCode).emit("remaining-cards-revealed", {
+            game: updatedGame,
+            currentQuestion,
+          });
+        }
+
+        setTimeout(() => {
+          const advancedGame = advanceGameState(gameCode);
+          if (advancedGame) {
+            handleGameStateAdvancement(gameCode, advancedGame, io, result);
+          }
+        }, 3000);
+      }, 2000);
+    }
+  } else {
+    io.to(gameCode).emit("answer-incorrect", {
+      ...result,
+      submittedText: answer,
+      singleAttempt: true,
+      allCardsRevealed: true,
+    });
+
+    setTimeout(() => {
+      const advancedGame = advanceGameState(gameCode);
+      if (advancedGame) {
+        handleGameStateAdvancement(gameCode, advancedGame, io, result);
+      }
+    }, 3000);
+  }
+});
+
+
+  
+  socket.on("player-buzz", ({ gameCode, playerId }) => {
+    const game = getGame(gameCode);
+    const player = getPlayer(playerId);
+  
+    if (!game || !player || game.currentRound !== 0 || game.status !== "active") return;
+  
+    // Only allow buzzer if no team has buzzed yet
+    if (game.buzzedTeamId) {
+      socket.emit("buzz-too-late", { message: "Another team already buzzed." });
+      return;
+    }
+  
+    // Register the team that buzzed
+    game.buzzedTeamId = player.teamId;
+    game.teams.forEach((t) => (t.active = t.id === player.teamId));
+    updateGame(gameCode, game);
+  
+    io.to(gameCode).emit("buzzer-pressed", {
+      teamId: player.teamId,
+      teamName: game.teams.find((t) => t.id === player.teamId)?.name,
+      playerName: player.name,
+    });
   });
+  
+  
 }
 
 // Helper function to handle game state advancement logic
@@ -237,7 +332,13 @@ function handleGameStateAdvancement(gameCode, advancedGame, io, result) {
     advancedGame.gameState.currentTurn !== result.game.gameState.currentTurn
   ) {
     // Turn switched
-    const newActiveTeam = advancedGame.teams.find((t) => t.active);
+   // const newActiveTeam = advancedGame.teams.find((t) => t.active);
+// ✅ Ensure correct active team
+advancedGame.teams.forEach((team) => {
+  team.active = team.id === advancedGame.gameState.currentTurn;
+});
+
+const newActiveTeam = advancedGame.teams.find((t) => t.active);
 
     io.to(gameCode).emit("turn-changed", {
       game: advancedGame,

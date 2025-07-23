@@ -18,7 +18,7 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
   console.log(`🚀 Family Feud Quiz Server running on port ${PORT}`);
   console.log(`📱 Frontend should connect to http://localhost:${PORT}`);

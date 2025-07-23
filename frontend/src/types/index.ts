@@ -14,6 +14,7 @@ export interface RoundData {
 export interface Game {
   id: string;
   code: string;
+  buzzedTeamId?: string;
   status: "waiting" | "active" | "round-summary" | "finished";
   currentQuestionIndex: number;
   currentRound: number;

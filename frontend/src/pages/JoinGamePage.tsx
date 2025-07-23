@@ -13,6 +13,7 @@ import TeamPanel from "../components/game/TeamPanel";
 import Button from "../components/common/Button";
 import TurnIndicator from "../components/game/TurnIndicator";
 import RoundSummaryComponent from "../components/game/RoundSummaryComponent";
+import BuzzerButton from "../components/game/BuzzerButton";
 
 // Import hooks and services
 import { useSocket } from "../hooks/useSocket";
@@ -32,7 +33,8 @@ const JoinGamePage: React.FC = () => {
   const [answer, setAnswer] = useState("");
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
   const [gameMessage, setGameMessage] = useState("");
-
+  const [hasBuzzed, setHasBuzzed] = useState(false);
+  const [buzzFeedback, setBuzzFeedback] = useState("");
   // Extract question data for teams
   const getTeamQuestionData = (teamKey: "team1" | "team2"): RoundData => {
     if (!game?.gameState?.questionData?.[teamKey]) {
@@ -61,6 +63,7 @@ const JoinGamePage: React.FC = () => {
     connect,
     playerJoinGame,
     joinTeam,
+    buzzIn,
     submitAnswer,
     requestPlayersList,
   } = useSocket({
@@ -207,6 +210,11 @@ const JoinGamePage: React.FC = () => {
       setError(data.message || "Answer rejected");
       setTimeout(() => setError(""), 3000);
     },
+    onPlayerBuzzed: ({ game, playerId }) => {
+      // Handle buzz-in and update state
+      setGame(game);
+      if (player?.id === playerId) setHasBuzzed(true);
+    },
   });
 
   // Periodically request updated player list from server
@@ -277,6 +285,13 @@ const JoinGamePage: React.FC = () => {
     }
     setIsLoading(false);
   };
+// Buzz-in handler
+  const handleBuzzIn = () => {
+    if (player && game && !hasBuzzed && !game.buzzedTeamId) {
+      buzzIn(game.code, player.id);
+    }
+  };
+
 
   const handleJoinTeam = (teamId: string) => {
     if (player && game) {
@@ -377,7 +392,6 @@ const JoinGamePage: React.FC = () => {
 
     return (
       <PageLayout gameCode={game.code} variant="game">
-        {/* Left Team Panel with Question Data */}
         <div className="w-48 flex-shrink-0">
           <TeamPanel
             team={game.teams[0]}
@@ -394,10 +408,8 @@ const JoinGamePage: React.FC = () => {
             questionData={getTeamQuestionData("team1")}
           />
         </div>
-
-        {/* Center Game Area */}
+  
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Turn Indicator */}
           <TurnIndicator
             currentTeam={game.gameState.currentTurn}
             teams={game.teams}
@@ -406,95 +418,82 @@ const JoinGamePage: React.FC = () => {
             round={game.currentRound}
             variant="compact"
           />
-
-          {/* Game Board */}
+  
           <GameBoard game={game} variant="player" />
-
-          {/* Answer Input Area - COMPLETELY CLEAN */}
+  
           <div className="glass-card p-4 mt-2">
             {player.teamId ? (
               <div>
-                {/* Game Status Message */}
+                {/* Game Message */}
                 {gameMessage && (
                   <div className="mb-3 p-2 bg-blue-500/20 border border-blue-500/50 rounded">
-                    <p className="text-blue-300 text-sm text-center">
-                      {gameMessage}
-                    </p>
+                    <p className="text-blue-300 text-sm text-center">{gameMessage}</p>
                   </div>
                 )}
-
+  
                 {/* Error Message */}
                 {error && (
                   <div className="mb-3 p-2 bg-red-500/20 border border-red-500/50 rounded">
                     <p className="text-red-300 text-sm text-center">{error}</p>
                   </div>
                 )}
-
-                {/* Answer Input - COMPLETELY CLEAN */}
-                <div className="text-center">
-                  {isMyTurn ? (
-                    <div className="max-w-md mx-auto">
-                      <div className="space-y-3">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={answer}
-                            onChange={(e) => setAnswer(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder="Type your answer here..."
-                            disabled={!canAnswer}
-                            autoFocus={true}
-                            className="w-full px-4 py-3 text-lg font-semibold rounded-lg 
-                     bg-white text-gray-900 
-                     border-2 border-green-400 
-                     focus:outline-none focus:border-green-300 
-                     focus:ring-4 focus:ring-green-300/30 
-                     transition-all shadow-md
-                     placeholder-gray-500"
-                          />
-                        </div>
-
-                        <button
-                          onClick={handleSubmitAnswer}
-                          disabled={!answer.trim() || !canAnswer}
-                          className={`w-full py-3 px-6 rounded-lg font-bold text-lg 
-                     transition-all transform shadow-lg
-                     ${
-                       canAnswer && answer.trim()
-                         ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hover:scale-105 active:scale-95"
-                         : "bg-gray-500 text-gray-300 cursor-not-allowed opacity-60"
-                     }`}
-                        >
-                          {answer.trim() ? "Submit Answer" : "Type an answer..."}
-                        </button>
-                      </div>
+  
+                {/* Toss-up or Answer input */}
+                {game.currentRound === 0 ? (
+                  !game.buzzedTeamId ? (
+                    <div className="flex justify-center my-4">
+                      <BuzzerButton
+                        onBuzz={handleBuzzIn}
+                        disabled={hasBuzzed || !!game.buzzedTeamId}
+                        teamName={myTeam?.name}
+                      />
                     </div>
                   ) : (
-                    <div className="p-6 bg-gray-700/30 rounded-lg backdrop-blur">
-                      <div className="flex items-center justify-center gap-3 mb-3">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-white"></div>
-                        <p className="text-gray-300 font-medium">
-                          {game.teams.find((t) => t.active)?.name ||
-                            "Other team"}{" "}
-                          is answering...
-                        </p>
-                      </div>
+                    <div className="max-w-md mx-auto">
+                      <input
+                        type="text"
+                        value={answer}
+                        onChange={(e) => setAnswer(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type your answer here..."
+                        disabled={!canAnswer}
+                        autoFocus={true}
+                        className="w-full px-4 py-3 text-lg font-semibold rounded-lg bg-white text-gray-900 border-2 border-green-400 focus:outline-none focus:border-green-300 focus:ring-4 focus:ring-green-300/30 transition-all shadow-md placeholder-gray-500"
+                      />
+                      <button
+                        onClick={handleSubmitAnswer}
+                        disabled={!answer.trim() || !canAnswer}
+                        className={`w-full py-3 px-6 mt-2 rounded-lg font-bold text-lg transition-all transform shadow-lg ${
+                          canAnswer && answer.trim()
+                            ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hover:scale-105 active:scale-95"
+                            : "bg-gray-500 text-gray-300 cursor-not-allowed opacity-60"
+                        }`}
+                      >
+                        {answer.trim() ? "Submit Answer" : "Type an answer..."}
+                      </button>
                     </div>
-                  )}
-                </div>
+                  )
+                ) : (
+                  <div className="p-6 bg-gray-700/30 rounded-lg backdrop-blur">
+                    <div className="flex items-center justify-center gap-3 mb-3">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-white"></div>
+                      <p className="text-gray-300 font-medium">
+                        {game.teams.find((t) => t.active)?.name || "Other team"} is answering...
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="p-4 border-2 border-red-400/50 bg-red-400/10 rounded text-center">
                 <p className="text-red-300 font-medium text-sm">
-                  You didn't select a team before the game started. Please wait
-                  for the next game.
+                  You didn't select a team before the game started. Please wait for the next game.
                 </p>
               </div>
             )}
           </div>
         </div>
-
-        {/* Right Team Panel with Question Data */}
+  
         <div className="w-48 flex-shrink-0">
           <TeamPanel
             team={game.teams[1]}
@@ -513,34 +512,7 @@ const JoinGamePage: React.FC = () => {
         </div>
       </PageLayout>
     );
-  }
-
-  // Game finished - show results
-  if (game && game.status === "finished") {
-    return (
-      <PageLayout gameCode={game.code}>
-        <GameResults teams={game.teams} />
-      </PageLayout>
-    );
-  }
-
-  // Fallback for any unexpected game state
-  return (
-    <PageLayout gameCode={game?.code}>
-      <AnimatedCard>
-        <div className="glass-card p-8 text-center">
-          <p className="text-xl font-bold mb-4">Unexpected Game State</p>
-          <p className="text-slate-400 mb-4">
-            The game is in an unexpected state. Please refresh the page or
-            return to home.
-          </p>
-          <Link to={ROUTES.HOME}>
-            <Button variant="primary">Back to Home</Button>
-          </Link>
-        </div>
-      </AnimatedCard>
-    </PageLayout>
-  );
-};
-
-export default JoinGamePage;
+  };
+  return null; 
+}
+  export default JoinGamePage;

@@ -194,8 +194,9 @@ function createGame() {
     code: gameCode,
     status: "waiting",
     currentQuestionIndex: 0,
-    currentRound: 1,
-    questions: JSON.parse(JSON.stringify(mockQuestions)),
+    currentRound: 0,
+    questions: JSON.parse(JSON.stringify(mockQuestions)), // already has toss-up
+
     teams: [
       {
         id: uuidv4() + "_team1",
@@ -230,6 +231,9 @@ function createGame() {
         round2: { team1: 0, team2: 0 },
         round3: { team1: 0, team2: 0 },
       },
+      tossUpAnswers: [], // Stores both team responses
+tossUpSubmittedTeams: [], // To track who already answered
+
       awaitingAnswer: false,
       canAdvance: false,
       questionData: initializeQuestionData(),
@@ -252,7 +256,7 @@ function startGame(gameCode) {
   // Set to first question (should be team1's first question)
   const firstQuestion = game.questions.find(
     (q) =>
-      q.teamAssignment === "team1" && q.round === 1 && q.questionNumber === 1
+      q.teamAssignment === "team1" && q.round === 0 && q.questionNumber === 1
   );
 
   if (firstQuestion) {
@@ -299,21 +303,96 @@ function submitAnswer(gameCode, playerId, answerText) {
     return { success: false, message: "No current question" };
   }
 
-  // Check if it's the player's team's turn
   const playerTeam = game.teams.find((t) => t.id === player.teamId);
-  if (!playerTeam || !playerTeam.active) {
+  if (!playerTeam) {
+    return { success: false, message: "Invalid team" };
+  }
+
+  // ✅ TOSS-UP ROUND LOGIC
+  if (game.currentRound === 0) {
+    if (!game.tossUpSubmittedTeams) game.tossUpSubmittedTeams = [];
+    if (!game.tossUpAnswers) game.tossUpAnswers = [];
+
+    if (game.tossUpSubmittedTeams.includes(player.teamId)) {
+      return {
+        success: false,
+        message: "Your team has already answered the toss-up",
+      };
+    }
+
+    const matchingAnswer = checkAnswerMatch(answerText, currentQuestion.answers);
+    const score = matchingAnswer ? matchingAnswer.points : 0;
+
+    game.tossUpAnswers.push({
+      teamId: player.teamId,
+      teamName: playerTeam.name,
+      playerName: player.name,
+      answer: answerText,
+      score,
+      matchingAnswer,
+    });
+
+    game.tossUpSubmittedTeams.push(player.teamId);
+
+    // Reveal answer immediately
+    if (matchingAnswer) matchingAnswer.revealed = true;
+
+    const response = {
+      success: true,
+      isCorrect: !!matchingAnswer,
+      pointsAwarded: score,
+      matchingAnswer,
+      playerName: player.name,
+      teamName: playerTeam.name,
+      teamId: playerTeam.id,
+      submittedText: answerText,
+      game: game,
+      singleAttempt: true,
+      tossUp: true,
+      revealAllCards: !matchingAnswer,
+    };
+
+    // If both teams answered, decide toss-up winner
+    if (game.tossUpSubmittedTeams.length === 2) {
+      const best = game.tossUpAnswers.reduce((a, b) =>
+        a.score > b.score ? a : b
+      );
+
+      game.teams.forEach((t) => {
+        t.active = t.id === best.teamId;
+      });
+
+      game.gameState.currentTurn = best.teamId.includes("team1") ? "team1" : "team2";
+      game.currentRound = 1;
+      game.tossUpComplete = true;
+      game.status = "active";
+      game.tossUpWinner = best;
+
+      // Move to first question of winning team for round 1
+      const firstQ = game.questions.find(
+        (q) =>
+          q.round === 1 &&
+          ((game.gameState.currentTurn === "team1" && q.teamAssignment === "team1") ||
+           (game.gameState.currentTurn === "team2" && q.teamAssignment === "team2")) &&
+          q.questionNumber === 1
+      );
+
+      if (firstQ) {
+        game.currentQuestionIndex = game.questions.findIndex((q) => q.id === firstQ.id);
+      }
+
+      updateTeamActiveStatus(game);
+    }
+
+    return response;
+  }
+
+  // ✅ REGULAR ROUND LOGIC
+  if (!playerTeam.active) {
     return { success: false, message: "Not your team's turn" };
   }
 
-  console.log(`📝 Single attempt answer: "${answerText}" by ${player.name}`);
-
-  // Find matching answer
-  const matchingAnswer = currentQuestion.answers.find(
-    (answer) =>
-      !answer.revealed &&
-      (answer.text.toLowerCase().includes(answerText.toLowerCase().trim()) ||
-        answerText.toLowerCase().trim().includes(answer.text.toLowerCase()))
-  );
+  const matchingAnswer = checkAnswerMatch(answerText, currentQuestion.answers);
 
   let result = {
     success: true,
@@ -324,13 +403,14 @@ function submitAnswer(gameCode, playerId, answerText) {
     teamName: playerTeam.name,
     teamId: playerTeam.id,
     game: null,
-    shouldAdvance: true, // Always advance after single attempt
+    shouldAdvance: true,
     revealAllCards: false,
     revealRemainingAfterDelay: false,
+    submittedText: answerText,
+    singleAttempt: true,
   };
 
   if (matchingAnswer) {
-    // Correct answer - REVEAL THE CORRECT CARD IMMEDIATELY
     matchingAnswer.revealed = true;
     const points = matchingAnswer.points * game.currentRound;
 
@@ -340,37 +420,38 @@ function submitAnswer(gameCode, playerId, answerText) {
     result.isCorrect = true;
     result.pointsAwarded = points;
     result.matchingAnswer = matchingAnswer;
-    result.revealRemainingAfterDelay = true; // Reveal remaining cards after 2 seconds
+    result.revealRemainingAfterDelay = true;
 
-    // Update question data
     const teamKey = game.gameState.currentTurn;
     const currentRound = game.currentRound;
     const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
     updateQuestionData(game, teamKey, currentRound, questionNumber, true, points);
 
-    console.log(`✅ Correct answer: "${answerText}" = "${matchingAnswer.text}" (+${points} pts) - Will reveal remaining cards after 2s`);
+    console.log(
+      `✅ Correct answer: "${answerText}" = "${matchingAnswer.text}" (+${points} pts) - Will reveal remaining cards after 2s`
+    );
   } else {
-    // Wrong answer - REVEAL ALL CARDS IMMEDIATELY
-    currentQuestion.answers.forEach(answer => {
-      answer.revealed = true;
+    currentQuestion.answers.forEach((a) => {
+      a.revealed = true;
     });
 
     result.isCorrect = false;
     result.revealAllCards = true;
 
-    // Update question data for wrong attempt
     const teamKey = game.gameState.currentTurn;
     const currentRound = game.currentRound;
     const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
     updateQuestionData(game, teamKey, currentRound, questionNumber, false, 0);
 
-    console.log(`❌ Wrong answer: "${answerText}" - All cards revealed, moving to next question`);
+    console.log(
+      `❌ Wrong answer: "${answerText}" - All cards revealed, moving to next question`
+    );
   }
 
-  // Don't advance the game state here - let the socket handler do it after appropriate delays
   result.game = games[gameCode];
   return result;
 }
+
 
 // UPDATED: Advance game state (called after delay) - single attempt system
 function advanceGameState(gameCode) {
