@@ -155,6 +155,11 @@ function calculateTossUpSummary(game) {
     winner = game.tossUpAnswers.reduce((a, b) => (a.score > b.score ? a : b));
   }
 
+  const team1Answer =
+    game.tossUpAnswers?.find((a) => a.teamId === team1?.id) || null;
+  const team2Answer =
+    game.tossUpAnswers?.find((a) => a.teamId === team2?.id) || null;
+
   return {
     round: 0,
     tossUpWinner: winner
@@ -163,12 +168,12 @@ function calculateTossUpSummary(game) {
     tossUpAnswers: game.tossUpAnswers || [],
     teamScores: {
       team1: {
-        roundScore: 0,
+        roundScore: team1Answer ? team1Answer.score : 0,
         totalScore: team1 ? team1.score : 0,
         teamName: team1 ? team1.name : "Team 1",
       },
       team2: {
-        roundScore: 0,
+        roundScore: team2Answer ? team2Answer.score : 0,
         totalScore: team2 ? team2.score : 0,
         teamName: team2 ? team2.name : "Team 2",
       },
@@ -369,6 +374,9 @@ function submitAnswer(gameCode, playerId, answerText) {
 
     const matchingAnswer = checkAnswerMatch(answerText, currentQuestion.answers);
     const score = matchingAnswer ? matchingAnswer.points : 0;
+    if (score > 0) {
+      playerTeam.score += score;
+    }
 
     game.tossUpAnswers.push({
       teamId: player.teamId,

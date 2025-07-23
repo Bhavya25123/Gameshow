@@ -401,7 +401,7 @@ const JoinGamePage: React.FC = () => {
   // Final results screen for players when the game ends
   if (game && game.status === "finished") {
     return (
-      <PageLayout gameCode={game.code} variant="game">
+      <PageLayout gameCode={game.code}>
         <GameResults teams={game.teams} />
       </PageLayout>
     );
