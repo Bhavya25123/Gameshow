@@ -65,6 +65,14 @@ export interface Answer {
   revealed: boolean;
 }
 
+export interface TossUpAnswer {
+  teamId: string;
+  teamName: string;
+  playerName: string;
+  answer: string;
+  score: number;
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -96,6 +104,8 @@ export interface RoundSummary {
     team1: Question[];
     team2: Question[];
   };
+  tossUpWinner?: { teamId: string; teamName: string };
+  tossUpAnswers?: TossUpAnswer[];
 }
 
 // Base socket event data types

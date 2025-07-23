@@ -176,16 +176,36 @@ const HostGamePage: React.FC = () => {
       }
     });
 
-    socket.on("round-complete", (data) => {
-      console.log("🏁 Round completed:", data);
-      setGame(data.game);
-      setRoundSummary(data.roundSummary);
-      setControlMessage(
-        `Round ${data.roundSummary.round} completed! ${
-          data.isGameFinished ? "Game finished!" : "Ready for next round."
-        }`
-      );
-    });
+      socket.on("round-complete", (data) => {
+        console.log("🏁 Round completed:", data);
+
+        // Update game state if provided
+        if (data.game) {
+          setGame(data.game);
+        }
+
+        if (data.roundSummary) {
+          setRoundSummary(data.roundSummary);
+          if (data.roundSummary.round === 0) {
+            setControlMessage(
+              `${data.roundSummary.tossUpWinner?.teamName || "A team"} won the toss-up!`
+            );
+          } else {
+            setControlMessage(
+              `Round ${data.roundSummary.round} completed! ${
+                data.isGameFinished ? "Game finished!" : "Ready for next round."
+              }`
+            );
+          }
+        } else if (typeof data.round !== "undefined") {
+          // Fallback when summary is missing
+          setControlMessage(
+            `Round ${data.round} completed! ${
+              data.isGameFinished ? "Game finished!" : "Ready for next round."
+            }`
+          );
+        }
+      });
 
     socket.on("round-started", (data) => {
       console.log("🆕 New round started:", data);

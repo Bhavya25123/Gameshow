@@ -144,27 +144,68 @@ function calculateRoundSummary(game) {
   };
 }
 
+// Create a summary object for the toss-up round
+function calculateTossUpSummary(game) {
+  const team1 = getTeamByAssignment(game, "team1");
+  const team2 = getTeamByAssignment(game, "team2");
+
+  let winner = null;
+  if (game.tossUpAnswers && game.tossUpAnswers.length > 0) {
+    winner = game.tossUpAnswers.reduce((a, b) => (a.score > b.score ? a : b));
+  }
+
+  return {
+    round: 0,
+    tossUpWinner: winner
+      ? { teamId: winner.teamId, teamName: winner.teamName }
+      : null,
+    tossUpAnswers: game.tossUpAnswers || [],
+    teamScores: {
+      team1: {
+        roundScore: 0,
+        totalScore: team1 ? team1.score : 0,
+        teamName: team1 ? team1.name : "Team 1",
+      },
+      team2: {
+        roundScore: 0,
+        totalScore: team2 ? team2.score : 0,
+        teamName: team2 ? team2.name : "Team 2",
+      },
+    },
+    questionsAnswered: {
+      team1: [],
+      team2: [],
+    },
+  };
+}
+
 // Start new round
 function startNewRound(game) {
   game.currentRound += 1;
   game.gameState.questionsAnswered.team1 = 0;
   game.gameState.questionsAnswered.team2 = 0;
-  game.gameState.currentTurn = "team1"; // Team 1 always starts each round
+
+  // Determine which team should start this round.
+  // By default team1 would start, but after the toss-up the winning team
+  // should begin every subsequent round.
+  let startingTeam = "team1";
+  if (game.tossUpWinner && game.tossUpWinner.teamId) {
+    startingTeam = game.tossUpWinner.teamId.includes("team1") ? "team1" : "team2";
+  }
+  game.gameState.currentTurn = startingTeam;
 
   // Reset round scores
   game.teams.forEach((team) => {
     team.currentRoundScore = 0;
   });
 
-  // Set to first question of new round for team1
-  const team1FirstQuestion = game.questions.find(
-    (q) => q.teamAssignment === "team1" && q.round === game.currentRound
+  // Set to first question of new round for starting team
+  const firstQuestion = game.questions.find(
+    (q) => q.teamAssignment === startingTeam && q.round === game.currentRound
   );
 
-  if (team1FirstQuestion) {
-    game.currentQuestionIndex = game.questions.findIndex(
-      (q) => q.id === team1FirstQuestion.id
-    );
+  if (firstQuestion) {
+    game.currentQuestionIndex = game.questions.findIndex((q) => q.id === firstQuestion.id);
   }
 
   // Update team active status
@@ -222,6 +263,9 @@ function createGame() {
     createdAt: new Date(),
     buzzedTeamId: null,
     activeTeamId: null,
+    // Stores the winning team of the toss-up round so that
+    // subsequent rounds start with the correct team
+    tossUpWinner: null,
     gameState: {
       currentTurn: null,
       questionsAnswered: {
@@ -354,36 +398,16 @@ function submitAnswer(gameCode, playerId, answerText) {
       revealAllCards: !matchingAnswer,
     };
 
-    // If both teams answered, decide toss-up winner
+    // If both teams answered, just store the winning team for the next round
     if (game.tossUpSubmittedTeams.length === 2) {
       const best = game.tossUpAnswers.reduce((a, b) =>
         a.score > b.score ? a : b
       );
 
-      game.teams.forEach((t) => {
-        t.active = t.id === best.teamId;
-      });
-
-      game.gameState.currentTurn = best.teamId.includes("team1") ? "team1" : "team2";
-      game.currentRound = 1;
-      game.tossUpComplete = true;
-      game.status = "active";
       game.tossUpWinner = best;
+      game.tossUpComplete = true;
 
-      // Move to first question of winning team for round 1
-      const firstQ = game.questions.find(
-        (q) =>
-          q.round === 1 &&
-          ((game.gameState.currentTurn === "team1" && q.teamAssignment === "team1") ||
-           (game.gameState.currentTurn === "team2" && q.teamAssignment === "team2")) &&
-          q.questionNumber === 1
-      );
-
-      if (firstQ) {
-        game.currentQuestionIndex = game.questions.findIndex((q) => q.id === firstQ.id);
-      }
-
-      updateTeamActiveStatus(game);
+      // No round advancement here; host will continue to next round
     }
 
     return response;
@@ -692,6 +716,7 @@ module.exports = {
   getCurrentQuestion,
   getQuestionsForTeamRound,
   calculateRoundSummary,
+  calculateTossUpSummary,
   isRoundComplete,
   checkAnswerMatch,
   getTeamByAssignment,
