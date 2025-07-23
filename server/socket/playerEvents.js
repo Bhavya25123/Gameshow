@@ -290,11 +290,13 @@ socket.on("submit-answer", (data) => {
     // Register the team that buzzed
     game.buzzedTeamId = player.teamId;
     game.teams.forEach((t) => (t.active = t.id === player.teamId));
-    updateGame(gameCode, game);
-  
+    const updatedGame = updateGame(gameCode, game);
+
     io.to(gameCode).emit("buzzer-pressed", {
+      game: updatedGame,
+      playerId: player.id,
       teamId: player.teamId,
-      teamName: game.teams.find((t) => t.id === player.teamId)?.name,
+      teamName: updatedGame.teams.find((t) => t.id === player.teamId)?.name,
       playerName: player.name,
     });
   });
