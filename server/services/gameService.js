@@ -220,6 +220,8 @@ function createGame() {
     players: [],
     hostId: null,
     createdAt: new Date(),
+    buzzedTeamId: null,
+    activeTeamId: null,
     gameState: {
       currentTurn: null,
       questionsAnswered: {
