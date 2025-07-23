@@ -491,6 +491,30 @@ const JoinGamePage: React.FC = () => {
                       </button>
                     </div>
                   )
+                ) : isMyTurn ? (
+                  <div className="max-w-md mx-auto">
+                    <input
+                      type="text"
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Type your answer here..."
+                      disabled={!canAnswer}
+                      autoFocus={true}
+                      className="w-full px-4 py-3 text-lg font-semibold rounded-lg bg-white text-gray-900 border-2 border-green-400 focus:outline-none focus:border-green-300 focus:ring-4 focus:ring-green-300/30 transition-all shadow-md placeholder-gray-500"
+                    />
+                    <button
+                      onClick={handleSubmitAnswer}
+                      disabled={!answer.trim() || !canAnswer}
+                      className={`w-full py-3 px-6 mt-2 rounded-lg font-bold text-lg transition-all transform shadow-lg ${
+                        canAnswer && answer.trim()
+                          ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hover:scale-105 active:scale-95"
+                          : "bg-gray-500 text-gray-300 cursor-not-allowed opacity-60"
+                      }`}
+                    >
+                      {answer.trim() ? "Submit Answer" : "Type an answer..."}
+                    </button>
+                  </div>
                 ) : (
                   <div className="p-6 bg-gray-700/30 rounded-lg backdrop-blur">
                     <div className="flex items-center justify-center gap-3 mb-3">
