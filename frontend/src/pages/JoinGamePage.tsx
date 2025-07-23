@@ -151,22 +151,38 @@ const JoinGamePage: React.FC = () => {
       setGame(data.game);
       setGameMessage(`It's now ${data.teamName}'s turn!`);
     },
-    onNextQuestion: (data: any) => {
-      console.log("Next question event received:", data);
-      setGame(data.game);
-      setAnswer("");
-      if (data.sameTeam) {
-        setGameMessage("Same team continues with their next question.");
-      } else {
-        setGameMessage("Moving to next question.");
-      }
-    },
-    onRoundComplete: (data: any) => {
-      console.log("Round complete event received:", data);
-      setGame(data.game);
-      setRoundSummary(data.roundSummary);
-      setGameMessage(`Round ${data.roundSummary.round} completed!`);
-    },
+      onNextQuestion: (data: any) => {
+        console.log("Next question event received:", data);
+        setGame(data.game);
+        setAnswer("");
+        if (data.sameTeam) {
+          setGameMessage("Same team continues with their next question.");
+        } else {
+          setGameMessage("Moving to next question.");
+        }
+      },
+      onRoundComplete: (data: any) => {
+        console.log("Round complete event received:", data);
+
+        // Update local game state when provided
+        if (data.game) {
+          setGame(data.game);
+        }
+
+        if (data.roundSummary) {
+          setRoundSummary(data.roundSummary);
+          if (data.roundSummary.round === 0) {
+            setGameMessage(
+              `${data.roundSummary.tossUpWinner?.teamName || "A team"} won the toss-up!`
+            );
+          } else {
+            setGameMessage(`Round ${data.roundSummary.round} completed!`);
+          }
+        } else if (typeof data.round !== "undefined") {
+          // Fallback to a simple message when summary is missing
+          setGameMessage(`Round ${data.round} completed!`);
+        }
+      },
     onRoundStarted: (data: any) => {
       console.log("Round started event received:", data);
       setGame(data.game);
@@ -382,6 +398,15 @@ const JoinGamePage: React.FC = () => {
     );
   }
 
+  // Final results screen for players when the game ends
+  if (game && game.status === "finished") {
+    return (
+      <PageLayout gameCode={game.code} variant="game">
+        <GameResults teams={game.teams} />
+      </PageLayout>
+    );
+  }
+
   // Active game - SINGLE ATTEMPT LAYOUT WITH CLEAN UI
   if (game && game.status === "active") {
     const myTeam = game.teams.find((team) => team.id === player.teamId);
@@ -475,6 +500,30 @@ const JoinGamePage: React.FC = () => {
                       </button>
                     </div>
                   )
+                ) : isMyTurn ? (
+                  <div className="max-w-md mx-auto">
+                    <input
+                      type="text"
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Type your answer here..."
+                      disabled={!canAnswer}
+                      autoFocus={true}
+                      className="w-full px-4 py-3 text-lg font-semibold rounded-lg bg-white text-gray-900 border-2 border-green-400 focus:outline-none focus:border-green-300 focus:ring-4 focus:ring-green-300/30 transition-all shadow-md placeholder-gray-500"
+                    />
+                    <button
+                      onClick={handleSubmitAnswer}
+                      disabled={!answer.trim() || !canAnswer}
+                      className={`w-full py-3 px-6 mt-2 rounded-lg font-bold text-lg transition-all transform shadow-lg ${
+                        canAnswer && answer.trim()
+                          ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hover:scale-105 active:scale-95"
+                          : "bg-gray-500 text-gray-300 cursor-not-allowed opacity-60"
+                      }`}
+                    >
+                      {answer.trim() ? "Submit Answer" : "Type an answer..."}
+                    </button>
+                  </div>
                 ) : (
                   <div className="p-6 bg-gray-700/30 rounded-lg backdrop-blur">
                     <div className="flex items-center justify-center gap-3 mb-3">

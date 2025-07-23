@@ -6,6 +6,7 @@ const {
   submitAnswer,
   advanceGameState,
   getCurrentQuestion,
+  calculateTossUpSummary,
 } = require("../services/gameService");
 
 function setupPlayerEvents(socket, io) {
@@ -120,15 +121,9 @@ socket.on("submit-answer", (data) => {
       return;
     }
 
-    game.tossUpSubmittedTeams.push(teamId);
-    game.tossUpAnswers.push({
-      teamId,
-      teamName: result.teamName,
-      score: result.pointsAwarded,
-      playerName: result.playerName,
-      answer: result.matchingAnswer,
-      submittedText: answer,
-    });
+    // The service already records the team's answer and marks them as having
+    // submitted. Avoid duplicating that state here so the toss-up round waits
+    // for both teams correctly.
 
     // Emit answer result
     if (result.isCorrect) {
@@ -171,13 +166,24 @@ socket.on("submit-answer", (data) => {
         }
 
         game.teams.forEach((t) => {
-          t.active = t.id === winnerTeamId;
+          t.active = false;
         });
 
+        const summary = calculateTossUpSummary(game);
+
+        game.status = "round-summary";
+        game.gameState.currentTurn = null;
+        game.tossUpWinner = {
+          teamId: winnerTeamId,
+          teamName: game.teams.find((t) => t.id === winnerTeamId)?.name,
+        };
+
+        updateGame(gameCode, game);
+
         io.to(gameCode).emit("round-complete", {
-          round: 0,
-          tossUpAnswers: game.tossUpAnswers,
-          winnerTeamId,
+          game,
+          roundSummary: summary,
+          isGameFinished: false,
         });
 
         console.log(`🏆 Toss-up round winner: ${winnerTeamId}`);
@@ -187,25 +193,25 @@ socket.on("submit-answer", (data) => {
       const [teamA, teamB] = game.teams;
       const otherTeamId = teamA.id === teamId ? teamB.id : teamA.id;
 
-      game.buzzedTeamId = otherTeamId;
+      // Keep the original buzzed team for tie-break purposes but switch the
+      // active team to allow the second team to answer.
       game.activeTeamId = otherTeamId;
       game.teams.forEach((t) => (t.active = t.id === otherTeamId));
       game.gameState.inputEnabled = true;
+      game.gameState.currentTurn = otherTeamId.includes("team1") ? "team1" : "team2";
 
-      io.to(gameCode).emit("onPlayerBuzzed", {
-        game,
-        playerId: null,
-        teamId: otherTeamId,
-      });
+      const updatedGame = updateGame(gameCode, game);
 
-      io.to(gameCode).emit("team-switched", {
-        currentTeamId: game.activeTeamId,
+      io.to(gameCode).emit("turn-changed", {
+        game: updatedGame,
+        newActiveTeam: updatedGame.gameState.currentTurn,
+        teamName: updatedGame.teams.find((t) => t.active)?.name || "Unknown",
+        currentQuestion: getCurrentQuestion(updatedGame),
       });
 
       console.log(`🔁 Switching to Team ${otherTeamId}`);
     }
 
-    updateGame(gameCode, game);
     return;
   }
 
