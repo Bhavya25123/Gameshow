@@ -210,10 +210,12 @@ const JoinGamePage: React.FC = () => {
       setError(data.message || "Answer rejected");
       setTimeout(() => setError(""), 3000);
     },
-    onPlayerBuzzed: ({ game, playerId }) => {
+    onPlayerBuzzed: (data: any) => {
       // Handle buzz-in and update state
-      setGame(game);
-      if (player?.id === playerId) setHasBuzzed(true);
+      if (data.game) {
+        setGame(data.game);
+      }
+      if (player?.id === data.playerId) setHasBuzzed(true);
     },
   });
 
