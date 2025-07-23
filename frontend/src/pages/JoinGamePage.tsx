@@ -398,6 +398,15 @@ const JoinGamePage: React.FC = () => {
     );
   }
 
+  // Final results screen for players when the game ends
+  if (game && game.status === "finished") {
+    return (
+      <PageLayout gameCode={game.code} variant="game">
+        <GameResults teams={game.teams} />
+      </PageLayout>
+    );
+  }
+
   // Active game - SINGLE ATTEMPT LAYOUT WITH CLEAN UI
   if (game && game.status === "active") {
     const myTeam = game.teams.find((team) => team.id === player.teamId);

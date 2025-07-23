@@ -72,19 +72,20 @@ function getNextQuestionIndex(game) {
 
   const currentTeam = game.gameState.currentTurn;
   const questionsAnswered = game.gameState.questionsAnswered[currentTeam];
+  const otherTeam = currentTeam === "team1" ? "team2" : "team1";
 
   // If current team has answered all 3 questions, switch to other team
   if (questionsAnswered >= 3) {
-    if (currentTeam === "team1") {
-      // Switch to team2, find their first question for current round
-      const team2Questions = game.questions.filter(
-        (q) => q.teamAssignment === "team2" && q.round === game.currentRound
+    // If the other team still has questions left, jump to their next one
+    if (game.gameState.questionsAnswered[otherTeam] < 3) {
+      const otherTeamQuestions = game.questions.filter(
+        (q) => q.teamAssignment === otherTeam && q.round === game.currentRound
       );
-      if (team2Questions.length > 0) {
-        return game.questions.findIndex((q) => q.id === team2Questions[0].id);
+      if (otherTeamQuestions.length > 0) {
+        return game.questions.findIndex((q) => q.id === otherTeamQuestions[0].id);
       }
     } else {
-      // Team2 finished, move to round summary or next round
+      // Both teams finished, move on
       return game.currentQuestionIndex + 1;
     }
   } else {
@@ -485,38 +486,38 @@ function advanceGameState(gameCode) {
   if (!game) return null;
 
   const currentTeam = game.gameState.currentTurn;
+  const otherTeam = currentTeam === "team1" ? "team2" : "team1";
 
   // Increment questions answered count
   game.gameState.questionsAnswered[currentTeam] += 1;
 
   // Check if team has answered all 3 questions
   if (game.gameState.questionsAnswered[currentTeam] >= 3) {
-    if (currentTeam === "team1") {
-      // Switch to team 2
-      game.gameState.currentTurn = "team2";
+    if (game.gameState.questionsAnswered[otherTeam] < 3) {
+      // Switch to the other team
+      game.gameState.currentTurn = otherTeam;
       updateTeamActiveStatus(game);
 
-      // Find team2's first question for current round
-      const team2FirstQuestion = game.questions.find(
+      const otherTeamFirstQuestion = game.questions.find(
         (q) =>
-          q.teamAssignment === "team2" &&
+          q.teamAssignment === otherTeam &&
           q.round === game.currentRound &&
-          q.questionNumber === 1
+          q.questionNumber ===
+            game.gameState.questionsAnswered[otherTeam] + 1
       );
 
-      if (team2FirstQuestion) {
+      if (otherTeamFirstQuestion) {
         game.currentQuestionIndex = game.questions.findIndex(
-          (q) => q.id === team2FirstQuestion.id
+          (q) => q.id === otherTeamFirstQuestion.id
         );
       }
     } else {
-      // Team 2 finished - round complete
+      // Both teams finished the round
       if (game.currentRound < 3) {
         game.status = "round-summary";
         game.gameState.currentTurn = null;
         updateTeamActiveStatus(game);
       } else {
-        // Game finished
         game.status = "finished";
         game.gameState.currentTurn = null;
         updateTeamActiveStatus(game);
