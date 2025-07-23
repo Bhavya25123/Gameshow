@@ -100,7 +100,6 @@ socket.on("submit-answer", (data) => {
   if (currentRound === 0) {
     if (!game.tossUpAnswers) game.tossUpAnswers = [];
     if (!game.tossUpSubmittedTeams) game.tossUpSubmittedTeams = [];
-    if (!game.buzzOrder) game.buzzOrder = [];
 
     const teamId = player.teamId;
 
@@ -167,7 +166,8 @@ socket.on("submit-answer", (data) => {
         } else if (answer2.score > answer1.score) {
           winnerTeamId = answer2.teamId;
         } else {
-          winnerTeamId = game.buzzOrder?.[0]; // Tie → use buzz order
+          // Tie - use the team that buzzed first
+          winnerTeamId = game.buzzedTeamId;
         }
 
         game.teams.forEach((t) => {
