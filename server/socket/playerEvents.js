@@ -6,6 +6,7 @@ const {
   submitAnswer,
   advanceGameState,
   getCurrentQuestion,
+  calculateTossUpSummary,
 } = require("../services/gameService");
 
 function setupPlayerEvents(socket, io) {
@@ -171,13 +172,24 @@ socket.on("submit-answer", (data) => {
         }
 
         game.teams.forEach((t) => {
-          t.active = t.id === winnerTeamId;
+          t.active = false;
         });
 
+        const summary = calculateTossUpSummary(game);
+
+        game.status = "round-summary";
+        game.gameState.currentTurn = null;
+        game.tossUpWinner = {
+          teamId: winnerTeamId,
+          teamName: game.teams.find((t) => t.id === winnerTeamId)?.name,
+        };
+
+        updateGame(gameCode, game);
+
         io.to(gameCode).emit("round-complete", {
-          round: 0,
-          tossUpAnswers: game.tossUpAnswers,
-          winnerTeamId,
+          game,
+          roundSummary: summary,
+          isGameFinished: false,
         });
 
         console.log(`🏆 Toss-up round winner: ${winnerTeamId}`);

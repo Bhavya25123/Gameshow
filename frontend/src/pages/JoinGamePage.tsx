@@ -151,22 +151,38 @@ const JoinGamePage: React.FC = () => {
       setGame(data.game);
       setGameMessage(`It's now ${data.teamName}'s turn!`);
     },
-    onNextQuestion: (data: any) => {
-      console.log("Next question event received:", data);
-      setGame(data.game);
-      setAnswer("");
-      if (data.sameTeam) {
-        setGameMessage("Same team continues with their next question.");
-      } else {
-        setGameMessage("Moving to next question.");
-      }
-    },
-    onRoundComplete: (data: any) => {
-      console.log("Round complete event received:", data);
-      setGame(data.game);
-      setRoundSummary(data.roundSummary);
-      setGameMessage(`Round ${data.roundSummary.round} completed!`);
-    },
+      onNextQuestion: (data: any) => {
+        console.log("Next question event received:", data);
+        setGame(data.game);
+        setAnswer("");
+        if (data.sameTeam) {
+          setGameMessage("Same team continues with their next question.");
+        } else {
+          setGameMessage("Moving to next question.");
+        }
+      },
+      onRoundComplete: (data: any) => {
+        console.log("Round complete event received:", data);
+
+        // Update local game state when provided
+        if (data.game) {
+          setGame(data.game);
+        }
+
+        if (data.roundSummary) {
+          setRoundSummary(data.roundSummary);
+          if (data.roundSummary.round === 0) {
+            setGameMessage(
+              `${data.roundSummary.tossUpWinner?.teamName || "A team"} won the toss-up!`
+            );
+          } else {
+            setGameMessage(`Round ${data.roundSummary.round} completed!`);
+          }
+        } else if (typeof data.round !== "undefined") {
+          // Fallback to a simple message when summary is missing
+          setGameMessage(`Round ${data.round} completed!`);
+        }
+      },
     onRoundStarted: (data: any) => {
       console.log("Round started event received:", data);
       setGame(data.game);
