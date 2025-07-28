@@ -6,7 +6,10 @@ import {
   getCurrentQuestion,
   calculateRoundSummary,
   initializeQuestionData,
+  updateQuestionData,
+  advanceGameState,
 } from "../services/gameService.js";
+import { handleGameStateAdvancement } from "./playerEvents.js";
 
 export function setupHostEvents(socket, io) {
   // Host joins game
@@ -98,37 +101,6 @@ export function setupHostEvents(socket, io) {
     }
   });
 
-  // Reveal all answers for the current question
-  socket.on("reveal-all-answers", (data) => {
-    const { gameCode } = data;
-    const game = getGame(gameCode);
-
-    if (game && game.hostId === socket.id && game.status === "active") {
-      console.log(`⚠️ Host revealing all answers in game: ${gameCode}`);
-
-      const currentQuestion = getCurrentQuestion(game);
-      if (currentQuestion) {
-        // Reveal all answers
-        currentQuestion.answers.forEach((answer) => {
-          answer.revealed = true;
-        });
-
-        const updatedGame = updateGame(gameCode, game);
-
-        io.to(gameCode).emit("answers-revealed", {
-          game: updatedGame,
-          currentQuestion: currentQuestion,
-          byHost: true,
-        });
-
-        console.log(
-          `⚠️ All answers revealed for question ${
-            game.currentQuestionIndex + 1
-          }`
-        );
-      }
-    }
-  });
 
   // Continue to next round (from round summary screen)
   socket.on("continue-to-next-round", (data) => {
@@ -176,37 +148,49 @@ export function setupHostEvents(socket, io) {
     if (game && game.hostId === socket.id && game.status === "active") {
       console.log(`⚠️ Host forcing next question in game: ${gameCode}`);
 
-      // Manually advance question index
-      game.currentQuestionIndex += 1;
-
-      // Update turn logic
       const currentQuestion = getCurrentQuestion(game);
       if (currentQuestion) {
-        game.gameState.currentTurn = currentQuestion.teamAssignment;
+        // Reveal all answers
+        currentQuestion.answers.forEach((a) => (a.revealed = true));
 
-        // Update team active status
-        game.teams.forEach((team) => {
-          if (currentQuestion.teamAssignment === "team1") {
-            team.active = team.id.includes("team1") || team.name.includes("1");
-          } else {
-            team.active = team.id.includes("team2") || team.name.includes("2");
-          }
+        // Record skipped question as incorrect
+        const teamKey = game.gameState.currentTurn;
+        const questionNumber =
+          game.gameState.questionsAnswered[teamKey] + 1;
+        updateQuestionData(
+          game,
+          teamKey,
+          game.currentRound,
+          questionNumber,
+          false,
+          0
+        );
+
+        updateGame(gameCode, game);
+
+        io.to(gameCode).emit("answers-revealed", {
+          game,
+          currentQuestion,
+          byHost: true,
+        });
+      }
+
+      const advancedGame = advanceGameState(gameCode);
+      if (advancedGame) {
+        handleGameStateAdvancement(gameCode, advancedGame, io, {
+          teamName: "Host", // placeholder
+          game,
         });
 
-        // Reset attempts for forced question
-        game.gameState.currentQuestionAttempts = 0;
-
-        const updatedGame = updateGame(gameCode, game);
-
         io.to(gameCode).emit("question-forced", {
-          game: updatedGame,
-          currentQuestion: currentQuestion,
-          activeTeam: game.gameState.currentTurn,
+          game: advancedGame,
+          currentQuestion: getCurrentQuestion(advancedGame),
+          activeTeam: advancedGame.gameState.currentTurn,
           byHost: true,
         });
 
         console.log(
-          `⚠️ Host forced advance to question ${game.currentQuestionIndex + 1}`
+          `⚠️ Host forced advance to question ${advancedGame.currentQuestionIndex + 1}`
         );
       }
     }
@@ -254,7 +238,7 @@ export function setupHostEvents(socket, io) {
       const resetUpdates = {
         status: "waiting",
         currentQuestionIndex: 0,
-        currentRound: 1,
+        currentRound: 0,
         gameState: {
           currentTurn: null,
           questionsAnswered: { team1: 0, team2: 0 },
@@ -270,6 +254,12 @@ export function setupHostEvents(socket, io) {
           questionData: initializeQuestionData(), // Reset question data
         },
       };
+
+      game.buzzedTeamId = null;
+      game.activeTeamId = null;
+      game.tossUpWinner = null;
+      game.tossUpAnswers = [];
+      game.tossUpSubmittedTeams = [];
 
       // Reset team scores and states
       game.teams.forEach((team) => {
