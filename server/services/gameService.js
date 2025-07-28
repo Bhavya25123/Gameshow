@@ -212,14 +212,17 @@ function startNewRound(game) {
     team.currentRoundScore = 0;
   });
 
-  // Set to first question of new round for team1
-  const team1FirstQuestion = game.questions.find(
-    (q) => q.teamAssignment === "team1" && q.round === game.currentRound
+  // Set to first question of new round for the starting team
+  const firstQuestion = game.questions.find(
+    (q) =>
+      q.teamAssignment === startingTeam &&
+      q.round === game.currentRound &&
+      q.questionNumber === 1
   );
 
-  if (team1FirstQuestion) {
+  if (firstQuestion) {
     game.currentQuestionIndex = game.questions.findIndex(
-      (q) => q._id === team1FirstQuestion._id
+      (q) => q._id === firstQuestion._id
     );
   }
 
@@ -568,6 +571,20 @@ export function advanceGameState(gameCode) {
         updateTeamActiveStatus(game);
       } else {
         // Game finished
+        const roundKey = `round${game.currentRound}`;
+        const team1 = game.teams.find((t) => t.id.includes("team1"));
+        const team2 = game.teams.find((t) => t.id.includes("team2"));
+
+        if (team1 && team2) {
+          game.gameState.roundScores[roundKey] = {
+            team1: team1.currentRoundScore,
+            team2: team2.currentRoundScore,
+          };
+
+          team1.roundScores[game.currentRound - 1] = team1.currentRoundScore;
+          team2.roundScores[game.currentRound - 1] = team2.currentRoundScore;
+        }
+
         game.status = "finished";
         game.gameState.currentTurn = null;
         updateTeamActiveStatus(game);
