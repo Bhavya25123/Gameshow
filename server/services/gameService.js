@@ -212,14 +212,17 @@ function startNewRound(game) {
     team.currentRoundScore = 0;
   });
 
-  // Set to first question of new round for team1
-  const team1FirstQuestion = game.questions.find(
-    (q) => q.teamAssignment === "team1" && q.round === game.currentRound
+  // Set to first question of new round for the starting team
+  const firstQuestion = game.questions.find(
+    (q) =>
+      q.teamAssignment === startingTeam &&
+      q.round === game.currentRound &&
+      q.questionNumber === 1
   );
 
-  if (team1FirstQuestion) {
+  if (firstQuestion) {
     game.currentQuestionIndex = game.questions.findIndex(
-      (q) => q._id === team1FirstQuestion._id
+      (q) => q._id === firstQuestion._id
     );
   }
 
