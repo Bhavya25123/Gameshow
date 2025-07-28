@@ -29,7 +29,6 @@ export const SOCKET_EVENTS = {
   GAME_STARTED: "game-started",
   REVEAL_ANSWER: "reveal-answer",
   ANSWER_REVEALED: "answer-revealed",
-  REVEAL_ALL_ANSWERS: "reveal-all-answers",
   ANSWERS_REVEALED: "answers-revealed",
   AWARD_POINTS: "award-points",
   POINTS_AWARDED: "points-awarded",

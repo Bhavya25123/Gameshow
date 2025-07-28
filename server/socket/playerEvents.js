@@ -357,12 +357,14 @@ export function handleGameStateAdvancement(gameCode, advancedGame, io, result) {
 
     console.log(`🏁 Round ${advancedGame.currentRound} completed`);
   } else if (advancedGame.status === "finished") {
-    // Game finished
+    // Game finished - include round summary for final round
     const winner = getGameWinner(advancedGame);
+    const roundSummary = calculateRoundSummary(advancedGame);
 
     io.to(gameCode).emit("game-over", {
       game: advancedGame,
       winner: winner,
+      roundSummary,
     });
 
     console.log(`🏆 Game finished: ${gameCode}`);
