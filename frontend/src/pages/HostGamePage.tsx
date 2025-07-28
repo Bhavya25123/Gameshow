@@ -71,12 +71,12 @@ const HostGamePage: React.FC = () => {
       socketRef.current.disconnect();
     }
 
-    const socket = io("http://localhost:5000", {
+    const socket = io("http://localhost:5004", {
       forceNew: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      timeout: 5000,
+      timeout: 5004,
     });
 
     socketRef.current = socket;
@@ -291,7 +291,7 @@ const HostGamePage: React.FC = () => {
           error.message.includes("ERR_NETWORK")
         ) {
           setControlMessage(
-            "Cannot connect to server. Make sure the server is running on http://localhost:5000"
+            "Cannot connect to server. Make sure the server is running on http://localhost:5004"
           );
         } else {
           setControlMessage(`Error: ${error.message}`);
