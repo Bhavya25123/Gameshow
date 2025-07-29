@@ -127,12 +127,14 @@ export function setupHostEvents(socket, io) {
           console.log(`🆕 Round ${updatedGame.currentRound} started`);
         } else if (updatedGame.status === "finished") {
           // Game finished after round 3
-          const { getGameWinner } = require("../services/gameService");
+          const { getGameWinner, calculateRoundSummary } = require("../services/gameService.js");
           const winner = getGameWinner(updatedGame);
+          const roundSummary = calculateRoundSummary(updatedGame);
 
           io.to(gameCode).emit("game-over", {
             game: updatedGame,
             winner: winner,
+            roundSummary,
           });
 
           console.log(`🏆 Game finished after all rounds: ${gameCode}`);

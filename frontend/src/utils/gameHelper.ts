@@ -132,8 +132,9 @@ export const isAnswerMatch = (
 
   const distance = levenshtein(normalizedUser, normalizedCorrect);
   const ratio = distance / Math.max(normalizedUser.length, normalizedCorrect.length);
+  const allowed = Math.max(1, Math.floor(normalizedCorrect.length * 0.25));
 
-  return distance <= 2 && ratio <= 0.25;
+  return distance <= allowed && ratio <= 0.25;
 };
 
 // Calculate points with round multiplier

@@ -371,6 +371,7 @@ export function updateQuestionData(
     game.gameState.questionData[teamKey][roundKey][questionIndex].pointsEarned =
       points;
   }
+}
 
 // Override question data in game state (host override)
 export function overrideQuestionData(game, teamKey, round, questionNumber, isCorrect, points) {
@@ -748,8 +749,9 @@ export function checkAnswerMatch(userAnswer, correctAnswers) {
 
     const distance = levenshtein(normalizedUser, normalizedCorrect);
     const ratio = distance / Math.max(normalizedUser.length, normalizedCorrect.length);
+    const allowed = Math.max(1, Math.floor(normalizedCorrect.length * 0.25));
 
-    return distance <= 2 && ratio <= 0.25;
+    return distance <= allowed && ratio <= 0.25;
   });
 }
 
