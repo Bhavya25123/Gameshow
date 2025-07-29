@@ -74,8 +74,8 @@ export function getNextQuestionIndex(game) {
   if (!currentQuestion) return game.currentQuestionIndex;
 
   const currentTeam = game.gameState.currentTurn;
-  const questionsAnswered = game.gameState.questionsAnswered[currentTeam];
   const otherTeam = currentTeam === "team1" ? "team2" : "team1";
+  const questionsAnswered = game.gameState.questionsAnswered[currentTeam];
 
   // If current team has answered all 3 questions, switch to other team
   if (questionsAnswered >= 3) {
@@ -539,32 +539,34 @@ export function advanceGameState(gameCode) {
   if (!game) return null;
 
   const currentTeam = game.gameState.currentTurn;
+  const otherTeam = currentTeam === "team1" ? "team2" : "team1";
 
   // Increment questions answered count
   game.gameState.questionsAnswered[currentTeam] += 1;
 
-  // Check if team has answered all 3 questions
+  // Check if the current team has answered all 3 questions
   if (game.gameState.questionsAnswered[currentTeam] >= 3) {
-    if (currentTeam === "team1") {
-      // Switch to team 2
-      game.gameState.currentTurn = "team2";
+    if (game.gameState.questionsAnswered[otherTeam] < 3) {
+      // Switch to the other team
+      game.gameState.currentTurn = otherTeam;
       updateTeamActiveStatus(game);
 
-      // Find team2's first question for current round
-      const team2FirstQuestion = game.questions.find(
+      // Jump to the other team's next unanswered question
+      const questionNumber = game.gameState.questionsAnswered[otherTeam] + 1;
+      const nextQuestion = game.questions.find(
         (q) =>
-          q.teamAssignment === "team2" &&
+          q.teamAssignment === otherTeam &&
           q.round === game.currentRound &&
-          q.questionNumber === 1
+          q.questionNumber === questionNumber
       );
 
-      if (team2FirstQuestion) {
+      if (nextQuestion) {
         game.currentQuestionIndex = game.questions.findIndex(
-          (q) => q._id === team2FirstQuestion._id
+          (q) => q._id === nextQuestion._id
         );
       }
     } else {
-      // Team 2 finished - round complete
+      // Both teams finished - round complete
       if (game.currentRound < 3) {
         game.status = "round-summary";
         game.gameState.currentTurn = null;

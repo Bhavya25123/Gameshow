@@ -112,7 +112,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     : "bg-slate-700 text-slate-400"
                 }`}
               >
-                {answer.revealed ? answer.score * game.currentRound : "?"}
+                {answer.revealed
+                  ? game.currentRound === 0
+                    ? answer.score
+                    : answer.score * game.currentRound
+                  : "?"}
               </span>
             </div>
           ))}
@@ -184,7 +188,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
                   : "bg-slate-700 text-slate-400"
               }`}
             >
-              {answer.revealed || isHost ? answer.score * game.currentRound : "?"}
+              {answer.revealed || isHost
+                ? game.currentRound === 0
+                  ? answer.score
+                  : answer.score * game.currentRound
+                : "?"}
             </span>
           </div>
         ))}

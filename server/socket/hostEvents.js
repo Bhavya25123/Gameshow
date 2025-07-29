@@ -101,37 +101,6 @@ export function setupHostEvents(socket, io) {
     }
   });
 
-  // Reveal all answers for the current question
-  socket.on("reveal-all-answers", (data) => {
-    const { gameCode } = data;
-    const game = getGame(gameCode);
-
-    if (game && game.hostId === socket.id && game.status === "active") {
-      console.log(`⚠️ Host revealing all answers in game: ${gameCode}`);
-
-      const currentQuestion = getCurrentQuestion(game);
-      if (currentQuestion) {
-        // Reveal all answers
-        currentQuestion.answers.forEach((answer) => {
-          answer.revealed = true;
-        });
-
-        const updatedGame = updateGame(gameCode, game);
-
-        io.to(gameCode).emit("answers-revealed", {
-          game: updatedGame,
-          currentQuestion: currentQuestion,
-          byHost: true,
-        });
-
-        console.log(
-          `⚠️ All answers revealed for question ${
-            game.currentQuestionIndex + 1
-          }`
-        );
-      }
-    }
-  });
 
   // Continue to next round (from round summary screen)
   socket.on("continue-to-next-round", (data) => {
@@ -269,7 +238,7 @@ export function setupHostEvents(socket, io) {
       const resetUpdates = {
         status: "waiting",
         currentQuestionIndex: 0,
-        currentRound: 1,
+        currentRound: 0,
         gameState: {
           currentTurn: null,
           questionsAnswered: { team1: 0, team2: 0 },
@@ -285,6 +254,12 @@ export function setupHostEvents(socket, io) {
           questionData: initializeQuestionData(), // Reset question data
         },
       };
+
+      game.buzzedTeamId = null;
+      game.activeTeamId = null;
+      game.tossUpWinner = null;
+      game.tossUpAnswers = [];
+      game.tossUpSubmittedTeams = [];
 
       // Reset team scores and states
       game.teams.forEach((team) => {
