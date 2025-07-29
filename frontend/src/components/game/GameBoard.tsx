@@ -5,19 +5,23 @@ import { getCurrentQuestion } from "../../utils/gameHelper";
 interface GameBoardProps {
   game: Game;
   onRevealAnswer?: (answerIndex: number) => void;
+  onOverrideAnswer?: (answerIndex: number) => void;
   onNextQuestion?: () => void;
   isHost?: boolean;
   variant?: "host" | "player";
   controlMessage?: string;
+  showOverrideControls?: boolean;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
   game,
   onRevealAnswer,
+  onOverrideAnswer,
   onNextQuestion,
   isHost = false,
   variant = "host",
   controlMessage,
+  showOverrideControls = false,
 }) => {
   const currentQuestion = getCurrentQuestion(game);
 
@@ -177,15 +181,26 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 )
               )}
             </span>
-            <span
-              className={`answer-points ${
-                answer.revealed
-                  ? "bg-gradient-to-r from-yellow-400 to-orange-400 text-black"
-                  : "bg-slate-700 text-slate-400"
-              }`}
+          <span
+            className={`answer-points ${
+              answer.revealed
+                ? "bg-gradient-to-r from-yellow-400 to-orange-400 text-black"
+                : "bg-slate-700 text-slate-400"
+            }`}
+          >
+            {answer.revealed || isHost ? answer.score * game.currentRound : "?"}
+          </span>
+          {isHost && showOverrideControls && (
+            <button
+              className="ml-2 text-xs text-red-500"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOverrideAnswer?.(index);
+              }}
             >
-              {answer.revealed || isHost ? answer.score * game.currentRound : "?"}
-            </span>
+              Override
+            </button>
+          )}
           </div>
         ))}
       </div>

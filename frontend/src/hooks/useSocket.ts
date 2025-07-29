@@ -28,6 +28,7 @@ interface SocketCallbacks {
   onGameReset?: (data: any) => void;
   // NEW: Card revelation events
   onRemainingCardsRevealed?: (data: any) => void;
+  onAnswerOverridden?: (data: any) => void;
 }
 
 export const useSocket = (callbacks: SocketCallbacks = {}) => {
@@ -166,6 +167,10 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
       newSocket.on("remaining-cards-revealed", callbacks.onRemainingCardsRevealed);
     }
 
+    if (callbacks.onAnswerOverridden) {
+      newSocket.on("answer-overridden", callbacks.onAnswerOverridden);
+    }
+
     socketRef.current = newSocket;
     setSocket(newSocket);
     return newSocket;
@@ -231,6 +236,20 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
     }
   };
 
+  const overrideAnswer = (
+    gameCode: string,
+    answerIndex: number,
+    teamKey: string
+  ) => {
+    if (socketRef.current) {
+      socketRef.current.emit("override-answer", {
+        gameCode,
+        answerIndex,
+        teamKey,
+      });
+    }
+  };
+
   // Player actions
   const playerJoinGame = (gameCode: string, playerId: string) => {
     if (socketRef.current) {
@@ -281,6 +300,7 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
     forceNextQuestion,
     forceRoundSummary,
     resetGame,
+    overrideAnswer,
     buzzIn,
     requestPlayersList,
     // Player actions

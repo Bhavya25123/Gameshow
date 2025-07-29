@@ -30,6 +30,7 @@ const HostGamePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [controlMessage, setControlMessage] = useState<string>("");
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
+  const [showOverrideControls, setShowOverrideControls] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -146,6 +147,7 @@ const HostGamePage: React.FC = () => {
       setControlMessage(
         `✅ ${data.playerName} answered correctly! +${data.pointsAwarded} points for ${data.teamName}.`
       );
+      setShowOverrideControls(false);
     });
 
     socket.on("answer-incorrect", (data) => {
@@ -154,6 +156,7 @@ const HostGamePage: React.FC = () => {
       setControlMessage(
         `❌ ${data.playerName} answered incorrectly. ${data.message}`
       );
+      setShowOverrideControls(true);
     });
 
     socket.on("remaining-cards-revealed", (data) => {
@@ -166,6 +169,7 @@ const HostGamePage: React.FC = () => {
       console.log("↔️ Turn changed:", data);
       setGame(data.game);
       setControlMessage(`Turn switched to ${data.teamName}!`);
+      setShowOverrideControls(false);
     });
 
     socket.on("next-question", (data) => {
@@ -176,6 +180,7 @@ const HostGamePage: React.FC = () => {
       } else {
         setControlMessage(`Moving to next question.`);
       }
+      setShowOverrideControls(false);
     });
 
       socket.on("round-complete", (data) => {
@@ -186,8 +191,8 @@ const HostGamePage: React.FC = () => {
           setGame(data.game);
         }
 
-        if (data.roundSummary) {
-          setRoundSummary(data.roundSummary);
+      if (data.roundSummary) {
+        setRoundSummary(data.roundSummary);
           if (data.roundSummary.round === 0) {
             setControlMessage(
               `${data.roundSummary.tossUpWinner?.teamName || "A team"} won the toss-up!`
@@ -205,9 +210,10 @@ const HostGamePage: React.FC = () => {
             `Round ${data.round} completed! ${
               data.isGameFinished ? "Game finished!" : "Ready for next round."
             }`
-          );
-        }
-      });
+        );
+      }
+      setShowOverrideControls(false);
+    });
 
     socket.on("round-started", (data) => {
       console.log("🆕 New round started:", data);
@@ -218,6 +224,7 @@ const HostGamePage: React.FC = () => {
           data.activeTeam === "team1" ? "Team 1" : "Team 2"
         } goes first. Each question allows only 1 attempt.`
       );
+      setShowOverrideControls(false);
     });
 
     socket.on("game-over", (data) => {
@@ -248,6 +255,13 @@ const HostGamePage: React.FC = () => {
       console.log("👁️ All answers revealed:", data);
       setGame(data.game);
       setControlMessage("All answers have been revealed!");
+    });
+
+    socket.on("answer-overridden", (data) => {
+      console.log("✅ Answer overridden:", data);
+      setGame(data.game);
+      setControlMessage("Answer overridden by host.");
+      setShowOverrideControls(false);
     });
 
     socket.on("connect_error", (error) => {
@@ -336,6 +350,18 @@ const HostGamePage: React.FC = () => {
   const handleResetGame = () => {
     if (gameCode && socketRef.current) {
       socketRef.current.emit("reset-game", { gameCode });
+    }
+  };
+
+  const handleOverrideAnswer = (answerIndex: number) => {
+    if (gameCode && socketRef.current && game) {
+      const teamKey = game.gameState.currentTurn as "team1" | "team2";
+      socketRef.current.emit("override-answer", {
+        gameCode,
+        answerIndex,
+        teamKey,
+      });
+      setShowOverrideControls(false);
     }
   };
 
@@ -507,6 +533,8 @@ const HostGamePage: React.FC = () => {
             variant="host"
             isHost={true}
             controlMessage={controlMessage}
+            showOverrideControls={showOverrideControls}
+            onOverrideAnswer={handleOverrideAnswer}
           />
 
           {/* Host Controls - CLEAN VERSION */}
