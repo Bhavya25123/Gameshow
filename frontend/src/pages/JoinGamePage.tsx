@@ -238,6 +238,11 @@ const JoinGamePage: React.FC = () => {
       setGame(data.game);
       setGameMessage("All answers have been revealed!");
     },
+    onAnswerOverridden: (data: any) => {
+      console.log("Answer overridden:", data);
+      setGame(data.game);
+      setGameMessage("Answer overridden by host.");
+    },
     onGameReset: (data: any) => {
       console.log("Game reset received:", data);
       setGame(data.game);

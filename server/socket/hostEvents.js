@@ -8,6 +8,7 @@ import {
   initializeQuestionData,
   updateQuestionData,
   advanceGameState,
+  overrideAnswer,
 } from "../services/gameService.js";
 import { handleGameStateAdvancement } from "./playerEvents.js";
 
@@ -226,6 +227,29 @@ export function setupHostEvents(socket, io) {
       console.log(
         `⚠️ Host forced round summary for round ${game.currentRound}`
       );
+    }
+  });
+
+  // Host overrides a player's answer
+  socket.on("override-answer", (data) => {
+    const { gameCode, teamId, round, questionNumber, isCorrect, pointsAwarded } = data;
+    const game = getGame(gameCode);
+
+    if (game && game.hostId === socket.id) {
+      const result = overrideAnswer(
+        gameCode,
+        teamId,
+        round,
+        questionNumber,
+        isCorrect,
+        pointsAwarded
+      );
+
+      if (result.success) {
+        io.to(gameCode).emit("answer-overridden", result);
+      } else {
+        socket.emit("error", { message: result.message });
+      }
     }
   });
 

@@ -371,7 +371,33 @@ export function updateQuestionData(
     game.gameState.questionData[teamKey][roundKey][questionIndex].pointsEarned =
       points;
   }
+
+// Override question data in game state (host override)
+export function overrideQuestionData(game, teamKey, round, questionNumber, isCorrect, points) {
+  const roundKey = `round${round}`;
+  const questionIndex = questionNumber - 1;
+  if (game.gameState.questionData[teamKey] && game.gameState.questionData[teamKey][roundKey] && game.gameState.questionData[teamKey][roundKey][questionIndex]) {
+    game.gameState.questionData[teamKey][roundKey][questionIndex].firstAttemptCorrect = isCorrect;
+    game.gameState.questionData[teamKey][roundKey][questionIndex].pointsEarned = points;
+  }
 }
+
+// Host override an answer after submission
+export function overrideAnswer(gameCode, teamId, round, questionNumber, isCorrect, points) {
+  const game = games[gameCode];
+  if (!game) return { success: false, message: "Game not found" };
+  const team = game.teams.find((t) => t.id === teamId);
+  if (!team) return { success: false, message: "Team not found" };
+  const teamKey = teamId.includes("team1") ? "team1" : "team2";
+  const currentPoints = game.gameState.questionData?.[teamKey]?.[`round${round}`]?.[questionNumber - 1]?.pointsEarned || 0;
+  const diff = points - currentPoints;
+  team.score += diff;
+  team.currentRoundScore += diff;
+  overrideQuestionData(game, teamKey, round, questionNumber, isCorrect, points);
+  updateGame(gameCode, game);
+  return { success: true, game, teamId, teamName: team.name, round, questionNumber, pointsAwarded: points, isCorrect };
+}
+
 
 // Submit an answer - UPDATED: Single attempt system
 export function submitAnswer(gameCode, playerId, answerText) {

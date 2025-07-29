@@ -250,6 +250,12 @@ const HostGamePage: React.FC = () => {
       setControlMessage("All answers have been revealed!");
     });
 
+    socket.on("answer-overridden", (data) => {
+      console.log("✅ Answer overridden:", data);
+      setGame(data.game);
+      setControlMessage("Answer overridden by host.");
+    });
+
     socket.on("game-reset", (data) => {
       console.log("🔄 Game reset:", data);
       setGame(data.game);
@@ -330,6 +336,26 @@ const HostGamePage: React.FC = () => {
   const handleForceNextQuestion = () => {
     if (gameCode && socketRef.current) {
       socketRef.current.emit("force-next-question", { gameCode });
+    }
+  };
+
+  const handleOverrideAnswer = () => {
+    if (game && socketRef.current) {
+      const teamKey = game.gameState.currentTurn as "team1" | "team2";
+      const teamId = game.teams.find((t) =>
+        teamKey === "team1" ? t.id.includes("team1") : t.id.includes("team2")
+      )?.id;
+      if (!teamId) return;
+      const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
+      const points = 10; // simple override amount
+      socketRef.current.emit("override-answer", {
+        gameCode,
+        teamId,
+        round: game.currentRound,
+        questionNumber,
+        isCorrect: true,
+        pointsAwarded: points,
+      });
     }
   };
 
@@ -523,6 +549,14 @@ const HostGamePage: React.FC = () => {
                 className="text-xs py-1 px-3"
               >
                 ⏭️ Force Next
+              </Button>
+              <Button
+                onClick={handleOverrideAnswer}
+                variant="secondary"
+                size="sm"
+                className="text-xs py-1 px-3"
+              >
+                ✅ Override
               </Button>
               <Button
                 onClick={handleResetGame}

@@ -39,6 +39,8 @@ export const SOCKET_EVENTS = {
   NEXT_QUESTION: "next-question",
   FORCE_NEXT_QUESTION: "force-next-question",
   QUESTION_FORCED: "question-forced",
+  OVERRIDE_ANSWER: "override-answer",
+  ANSWER_OVERRIDDEN: "answer-overridden",
   CONTINUE_TO_NEXT_ROUND: "continue-to-next-round",
   ROUND_STARTED: "round-started",
   ROUND_COMPLETE: "round-complete",
