@@ -96,6 +96,33 @@ export const getTeamColorClasses = (teamIndex: number) => {
 };
 
 // Validate answer match
+export const levenshtein = (a: string, b: string): number => {
+  const matrix = [] as number[][];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + 1
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+};
+
 export const isAnswerMatch = (
   userAnswer: string,
   correctAnswer: string
@@ -103,9 +130,14 @@ export const isAnswerMatch = (
   const normalizedUser = userAnswer.toLowerCase().trim();
   const normalizedCorrect = correctAnswer.toLowerCase();
 
+  const distance = levenshtein(normalizedUser, normalizedCorrect);
+  const ratio = distance / Math.max(normalizedUser.length, normalizedCorrect.length);
+
   return (
     normalizedCorrect.includes(normalizedUser) ||
-    normalizedUser.includes(normalizedCorrect)
+    normalizedUser.includes(normalizedCorrect) ||
+    distance <= 2 ||
+    ratio <= 0.2
   );
 };
 
