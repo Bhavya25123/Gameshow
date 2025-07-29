@@ -40,12 +40,7 @@ function isAnswerMatch(userAnswer, correctAnswer) {
   const distance = levenshtein(normalizedUser, normalizedCorrect);
   const ratio = distance / Math.max(normalizedUser.length, normalizedCorrect.length);
 
-  return (
-    normalizedCorrect.includes(normalizedUser) ||
-    normalizedUser.includes(normalizedCorrect) ||
-    distance <= 2 ||
-    ratio <= 0.2
-  );
+  return distance <= 2 && ratio <= 0.25;
 }
 
 /**
