@@ -243,6 +243,7 @@ export function setupHostEvents(socket, io) {
         currentQuestionIndex: 0,
         currentRound: 0,
         gameState: {
+          ...game.gameState,
           currentTurn: null,
           questionsAnswered: { team1: 0, team2: 0 },
           roundScores: {
@@ -255,6 +256,11 @@ export function setupHostEvents(socket, io) {
           currentQuestionAttempts: 0,
           maxAttemptsPerQuestion: 3,
           questionData: initializeQuestionData(), // Reset question data
+          tossUpQuestion: game.gameState.tossUpQuestion
+            ? JSON.parse(JSON.stringify(game.gameState.tossUpQuestion))
+            : undefined,
+          tossUpAnswers: [],
+          tossUpSubmittedTeams: [],
         },
       };
 
