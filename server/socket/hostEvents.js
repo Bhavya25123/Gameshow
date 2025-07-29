@@ -173,25 +173,28 @@ export function setupHostEvents(socket, io) {
           currentQuestion,
           byHost: true,
         });
-      }
 
-      const advancedGame = advanceGameState(gameCode);
-      if (advancedGame) {
-        handleGameStateAdvancement(gameCode, advancedGame, io, {
-          teamName: "Host", // placeholder
-          game,
-        });
+        // Wait a moment so players can see the revealed answers
+        setTimeout(() => {
+          const advancedGame = advanceGameState(gameCode);
+          if (advancedGame) {
+            handleGameStateAdvancement(gameCode, advancedGame, io, {
+              teamName: "Host",
+              game,
+            });
 
-        io.to(gameCode).emit("question-forced", {
-          game: advancedGame,
-          currentQuestion: getCurrentQuestion(advancedGame),
-          activeTeam: advancedGame.gameState.currentTurn,
-          byHost: true,
-        });
+            io.to(gameCode).emit("question-forced", {
+              game: advancedGame,
+              currentQuestion: getCurrentQuestion(advancedGame),
+              activeTeam: advancedGame.gameState.currentTurn,
+              byHost: true,
+            });
 
-        console.log(
-          `⚠️ Host forced advance to question ${advancedGame.currentQuestionIndex + 1}`
-        );
+            console.log(
+              `⚠️ Host forced advance to question ${advancedGame.currentQuestionIndex + 1}`
+            );
+          }
+        }, 2000);
       }
     }
   });
@@ -276,12 +279,28 @@ export function setupHostEvents(socket, io) {
         });
       });
 
+      if (game.gameState.tossUpQuestion) {
+        game.gameState.tossUpQuestion.answers.forEach(
+          (a) => (a.revealed = false)
+        );
+      }
+
       const resetGame = updateGame(gameCode, resetUpdates);
 
       io.to(gameCode).emit("game-reset", {
         game: resetGame,
         message: "Game has been reset by the host",
       });
+
+      // Automatically restart the game so play can resume without creating a new code
+      const startedGame = startGame(gameCode);
+      if (startedGame) {
+        io.to(gameCode).emit("game-started", {
+          game: startedGame,
+          currentQuestion: getCurrentQuestion(startedGame),
+          activeTeam: startedGame.gameState.currentTurn,
+        });
+      }
 
       console.log(`🔄 Game reset successfully with question data: ${gameCode}`);
     }
