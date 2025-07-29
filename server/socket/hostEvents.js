@@ -264,6 +264,13 @@ export function setupHostEvents(socket, io) {
         },
       };
 
+      // Ensure the copied toss-up question has all answers hidden
+      if (resetUpdates.gameState.tossUpQuestion) {
+        resetUpdates.gameState.tossUpQuestion.answers.forEach(
+          (a) => (a.revealed = false)
+        );
+      }
+
       game.buzzedTeamId = null;
       game.activeTeamId = null;
       game.tossUpWinner = null;
