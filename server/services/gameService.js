@@ -373,6 +373,34 @@ export function updateQuestionData(
   }
 }
 
+// Manually override answer correctness and award points
+export function overrideAnswer(gameCode, answerIndex, teamKey) {
+  const game = games[gameCode];
+  if (!game) return null;
+
+  const currentQuestion = getCurrentQuestion(game);
+  if (!currentQuestion) return null;
+
+  const answer = currentQuestion.answers[answerIndex];
+  if (!answer) return null;
+
+  // Reveal the chosen answer
+  answer.revealed = true;
+
+  const points = answer.score * game.currentRound;
+
+  const team = getTeamByAssignment(game, teamKey);
+  if (team) {
+    team.score += points;
+    team.currentRoundScore += points;
+  }
+
+  const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
+  updateQuestionData(game, teamKey, game.currentRound, questionNumber, true, points);
+
+  return game;
+}
+
 // Submit an answer - UPDATED: Single attempt system
 export function submitAnswer(gameCode, playerId, answerText) {
   const game = games[gameCode];

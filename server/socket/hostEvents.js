@@ -8,6 +8,7 @@ import {
   initializeQuestionData,
   updateQuestionData,
   advanceGameState,
+  overrideAnswer,
 } from "../services/gameService.js";
 import { handleGameStateAdvancement } from "./playerEvents.js";
 
@@ -223,6 +224,19 @@ export function setupHostEvents(socket, io) {
         console.log(
           `⚠️ Host forced advance to question ${advancedGame.currentQuestionIndex + 1}`
         );
+      }
+    }
+  });
+
+  // Host overrides an answer manually
+  socket.on("override-answer", (data) => {
+    const { gameCode, answerIndex, teamKey } = data;
+    const game = getGame(gameCode);
+
+    if (game && game.hostId === socket.id && game.status === "active") {
+      const updatedGame = overrideAnswer(gameCode, answerIndex, teamKey);
+      if (updatedGame) {
+        io.to(gameCode).emit("answer-overridden", { game: updatedGame });
       }
     }
   });
