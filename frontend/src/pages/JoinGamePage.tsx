@@ -233,6 +233,17 @@ const JoinGamePage: React.FC = () => {
       }
       if (player?.id === data.playerId) setHasBuzzed(true);
     },
+    onAnswersRevealed: (data: any) => {
+      console.log("All answers revealed:", data);
+      setGame(data.game);
+      setGameMessage("All answers have been revealed!");
+    },
+    onGameReset: (data: any) => {
+      console.log("Game reset received:", data);
+      setGame(data.game);
+      setRoundSummary(null);
+      setGameMessage(data.message || "Game has been reset.");
+    },
   });
 
   // Periodically request updated player list from server

@@ -26,6 +26,7 @@ interface SocketCallbacks {
   onRoundStarted?: (data: any) => void;
   onQuestionForced?: (data: any) => void;
   onGameReset?: (data: any) => void;
+  onAnswersRevealed?: (data: any) => void;
   // NEW: Card revelation events
   onRemainingCardsRevealed?: (data: any) => void;
 }
@@ -159,6 +160,10 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
 
     if (callbacks.onGameReset) {
       newSocket.on("game-reset", callbacks.onGameReset);
+    }
+
+    if (callbacks.onAnswersRevealed) {
+      newSocket.on("answers-revealed", callbacks.onAnswersRevealed);
     }
 
     // NEW: Card revelation events
