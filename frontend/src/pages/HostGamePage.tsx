@@ -358,7 +358,9 @@ const HostGamePage: React.FC = () => {
       )?.id;
       if (!teamId) return;
       const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
-      const answer = getCurrentQuestion(game).answers[answerIndex];
+      const currentQuestion = getCurrentQuestion(game);
+      if (!currentQuestion) return;
+      const answer = currentQuestion.answers[answerIndex];
       const points =
         game.currentRound === 0 ? answer.score : answer.score * game.currentRound;
 
@@ -401,7 +403,7 @@ const HostGamePage: React.FC = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [game?.status, gameCode]);
+  }, [game, gameCode]);
 
   // Cleanup socket on unmount
   useEffect(() => {

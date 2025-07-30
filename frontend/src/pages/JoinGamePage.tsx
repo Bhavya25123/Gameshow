@@ -266,7 +266,7 @@ const JoinGamePage: React.FC = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [game?.code, player?.id, requestPlayersList]);
+  }, [game, player, requestPlayersList]);
 
   const joinGame = async () => {
     if (!gameCode.trim() || !playerName.trim()) {
