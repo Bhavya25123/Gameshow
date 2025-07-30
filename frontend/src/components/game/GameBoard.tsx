@@ -72,11 +72,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
           <div className="flex justify-between items-center">
             <div>
               <h2 className="font-bold">
-                Round {game.currentRound} • {currentQuestion.questionCategory}
+                {game.currentRound === 0
+                  ? 'Toss-up Round'
+                  : `Round ${game.currentRound}`} •{' '}
+                {currentQuestion.questionCategory}
               </h2>
               <div className="text-xs text-slate-400">
-                Question {game.currentQuestionIndex + 1} of{" "}
-                {game.questions.length}
+                Question {game.currentRound === 0 ? 1 : game.currentQuestionIndex + 1} of{' '}
+                {game.currentRound === 0 ? 1 : game.questions.length}
               </div>
             </div>
             <RoundStatus />
@@ -137,10 +140,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <div className="flex justify-between items-center">
           <div>
             <h2 className="font-bold">
-              Round {game.currentRound} • {currentQuestion.questionCategory}
+              {game.currentRound === 0
+                ? 'Toss-up Round'
+                : `Round ${game.currentRound}`} •{' '}
+              {currentQuestion.questionCategory}
             </h2>
             <div className="text-xs text-slate-400">
-              Question {game.currentQuestionIndex + 1} of {game.questions.length}
+              Question {game.currentRound === 0 ? 1 : game.currentQuestionIndex + 1} of{' '}
+              {game.currentRound === 0 ? 1 : game.questions.length}
             </div>
           </div>
           <RoundStatus />

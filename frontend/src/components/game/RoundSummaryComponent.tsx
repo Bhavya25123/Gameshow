@@ -114,6 +114,13 @@ const RoundSummaryComponent: React.FC<RoundSummaryProps> = ({
               </div>
             )}
 
+            {round === 0 && (
+              <p className="text-sm text-slate-500 mb-6">
+                Points from the toss-up round do not count toward the final
+                score.
+              </p>
+            )}
+
             {/* Team Scores */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {[teamScores.team1, teamScores.team2].map((team, idx) => {
@@ -292,7 +299,9 @@ const RoundSummaryComponent: React.FC<RoundSummaryProps> = ({
                   ))}
                 </div>
                 <div className="text-xs text-slate-500 mt-2">
-                  Round {round} of 3 Complete
+                  {round === 0
+                    ? 'Toss-up Round Complete'
+                    : `Round ${round} of 3 Complete`}
                 </div>
               </div>
             )}
