@@ -161,6 +161,11 @@ const JoinGamePage: React.FC = () => {
           setGameMessage("Moving to next question.");
         }
       },
+      onQuestionComplete: (data: any) => {
+        console.log("Question complete event received:", data);
+        setGame(data.game);
+        setGameMessage("Waiting for host to advance...");
+      },
       onRoundComplete: (data: any) => {
         console.log("Round complete event received:", data);
 

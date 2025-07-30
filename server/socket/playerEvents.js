@@ -261,9 +261,15 @@ export function setupPlayerEvents(socket, io) {
           }
 
           setTimeout(() => {
-            const advancedGame = advanceGameState(gameCode);
-            if (advancedGame) {
-              handleGameStateAdvancement(gameCode, advancedGame, io, result);
+            const readyGame = getGame(gameCode);
+            if (readyGame) {
+              readyGame.gameState.canAdvance = true;
+              updateGame(gameCode, readyGame);
+
+              io.to(gameCode).emit("question-complete", {
+                game: readyGame,
+                currentQuestion: getCurrentQuestion(readyGame),
+              });
             }
           }, 3000);
         }, 2000);
@@ -277,9 +283,15 @@ export function setupPlayerEvents(socket, io) {
       });
 
       setTimeout(() => {
-        const advancedGame = advanceGameState(gameCode);
-        if (advancedGame) {
-          handleGameStateAdvancement(gameCode, advancedGame, io, result);
+        const readyGame = getGame(gameCode);
+        if (readyGame) {
+          readyGame.gameState.canAdvance = true;
+          updateGame(gameCode, readyGame);
+
+          io.to(gameCode).emit("question-complete", {
+            game: readyGame,
+            currentQuestion: getCurrentQuestion(readyGame),
+          });
         }
       }, 3000);
     }

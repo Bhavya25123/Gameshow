@@ -25,6 +25,7 @@ interface SocketCallbacks {
   onRoundComplete?: (data: any) => void;
   onRoundStarted?: (data: any) => void;
   onQuestionForced?: (data: any) => void;
+  onQuestionComplete?: (data: any) => void;
   onGameReset?: (data: any) => void;
   onAnswersRevealed?: (data: any) => void;
   // NEW: Card revelation events
@@ -159,6 +160,10 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
       newSocket.on("question-forced", callbacks.onQuestionForced);
     }
 
+    if (callbacks.onQuestionComplete) {
+      newSocket.on("question-complete", callbacks.onQuestionComplete);
+    }
+
     if (callbacks.onGameReset) {
       newSocket.on("game-reset", callbacks.onGameReset);
     }
@@ -226,6 +231,12 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
   const forceNextQuestion = (gameCode: string) => {
     if (socketRef.current) {
       socketRef.current.emit("force-next-question", { gameCode });
+    }
+  };
+
+  const advanceQuestion = (gameCode: string) => {
+    if (socketRef.current) {
+      socketRef.current.emit("advance-question", { gameCode });
     }
   };
 
@@ -310,6 +321,7 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
     hostJoinGame,
     startGame,
     continueToNextRound,
+    advanceQuestion,
     forceNextQuestion,
     forceRoundSummary,
     overrideAnswer,

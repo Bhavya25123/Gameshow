@@ -179,6 +179,12 @@ const HostGamePage: React.FC = () => {
       }
     });
 
+    socket.on("question-complete", (data) => {
+      console.log("🟢 Question complete:", data);
+      setGame(data.game);
+      setControlMessage("Question finished. Click Next Question when ready.");
+    });
+
       socket.on("round-complete", (data) => {
         console.log("🏁 Round completed:", data);
 
@@ -340,6 +346,12 @@ const HostGamePage: React.FC = () => {
   const handleForceNextQuestion = () => {
     if (gameCode && socketRef.current) {
       socketRef.current.emit("force-next-question", { gameCode });
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (gameCode && socketRef.current) {
+      socketRef.current.emit("advance-question", { gameCode });
     }
   };
 
@@ -556,6 +568,7 @@ const HostGamePage: React.FC = () => {
             controlMessage={controlMessage}
             overrideMode={overrideMode}
             onSelectAnswer={handleSelectOverride}
+            onNextQuestion={handleNextQuestion}
           />
 
           {/* Host Controls - CLEAN VERSION */}
@@ -564,6 +577,15 @@ const HostGamePage: React.FC = () => {
               <div className="text-sm text-slate-400 mb-2">Host Controls</div>
             </div>
             <div className="flex gap-2 justify-center flex-wrap">
+              <Button
+                onClick={handleNextQuestion}
+                variant="primary"
+                size="sm"
+                className="text-xs py-1 px-3"
+                disabled={!game?.gameState.canAdvance}
+              >
+                ➡️ Next Question
+              </Button>
               <Button
                 onClick={handleForceNextQuestion}
                 variant="secondary"

@@ -202,6 +202,31 @@ export function setupHostEvents(socket, io) {
     }
   });
 
+  // Host advances to the next question after a question is completed
+  socket.on("advance-question", (data) => {
+    const { gameCode } = data;
+    const game = getGame(gameCode);
+
+    if (
+      game &&
+      game.hostId === socket.id &&
+      game.status === "active" &&
+      game.gameState.canAdvance
+    ) {
+      const advancedGame = advanceGameState(gameCode);
+      if (advancedGame) {
+        // Reset advancement flag
+        advancedGame.gameState.canAdvance = false;
+        updateGame(gameCode, advancedGame);
+
+        handleGameStateAdvancement(gameCode, advancedGame, io, {
+          game: advancedGame,
+          teamName: "Host",
+        });
+      }
+    }
+  });
+
   // Manual round summary (emergency override)
   socket.on("force-round-summary", (data) => {
     const { gameCode } = data;

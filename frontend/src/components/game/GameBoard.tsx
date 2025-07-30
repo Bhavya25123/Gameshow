@@ -1,5 +1,6 @@
 import React from "react";
 import { Game } from "../../types";
+import Button from "../common/Button";
 import { getCurrentQuestion } from "../../utils/gameHelper";
 
 interface GameBoardProps {
@@ -209,7 +210,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       </div>
 
       {/* Host Control Message */}
-      {isHost && (controlMessage || overrideMode) && (
+      {isHost && (controlMessage || overrideMode || game.gameState.canAdvance) && (
         <div className="glass-card host-controls">
           <div className="text-center">
             {overrideMode && (
@@ -219,6 +220,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
             )}
             {controlMessage && (
               <div className="text-xs text-blue-400">{controlMessage}</div>
+            )}
+            {game.gameState.canAdvance && !overrideMode && (
+              <Button
+                onClick={onNextQuestion}
+                variant="primary"
+                size="sm"
+                className="mt-2 text-xs py-1 px-3"
+              >
+                Next Question
+              </Button>
             )}
           </div>
         </div>

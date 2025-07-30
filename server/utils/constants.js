@@ -37,6 +37,7 @@ export const SOCKET_EVENTS = {
   CLEAR_BUZZER: "clear-buzzer",
   BUZZER_CLEARED: "buzzer-cleared",
   NEXT_QUESTION: "next-question",
+  ADVANCE_QUESTION: "advance-question",
   FORCE_NEXT_QUESTION: "force-next-question",
   QUESTION_FORCED: "question-forced",
   OVERRIDE_ANSWER: "override-answer",
@@ -61,6 +62,7 @@ export const SOCKET_EVENTS = {
 
   // Game events
   GAME_OVER: "game-over",
+  QUESTION_COMPLETE: "question-complete",
   GET_PLAYERS: "get-players",
   PLAYERS_LIST: "players-list",
   GET_GAME_STATE: "get-game-state",

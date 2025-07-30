@@ -195,6 +195,7 @@ function startNewRound(game) {
   game.currentRound += 1;
   game.gameState.questionsAnswered.team1 = 0;
   game.gameState.questionsAnswered.team2 = 0;
+  game.gameState.canAdvance = false;
 
   // Determine which team should start this round.
   // By default team1 would start, but after the toss-up the winning team
@@ -322,6 +323,7 @@ export function startGame(gameCode) {
   game.status = "active";
   game.gameState.currentTurn = "team1"; // Team 1 starts
   game.gameState.awaitingAnswer = true;
+  game.gameState.canAdvance = false;
 
   // Set to first question (should be team1's first question)
   const firstQuestion = game.questions.find(
@@ -676,6 +678,7 @@ export function continueToNextRound(gameCode) {
     startNewRound(game);
     game.status = "active";
     game.gameState.awaitingAnswer = true;
+    game.gameState.canAdvance = false;
   } else {
     game.status = "finished";
   }
