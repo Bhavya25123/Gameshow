@@ -30,6 +30,7 @@ const HostGamePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [controlMessage, setControlMessage] = useState<string>("");
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
+  const [overrideMode, setOverrideMode] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -248,12 +249,14 @@ const HostGamePage: React.FC = () => {
       console.log("👁️ All answers revealed:", data);
       setGame(data.game);
       setControlMessage("All answers have been revealed!");
+      setOverrideMode(false);
     });
 
     socket.on("answer-overridden", (data) => {
       console.log("✅ Answer overridden:", data);
       setGame(data.game);
       setControlMessage("Answer overridden by host.");
+      setOverrideMode(false);
     });
 
     socket.on("game-reset", (data) => {
@@ -261,6 +264,7 @@ const HostGamePage: React.FC = () => {
       setGame(data.game);
       setRoundSummary(null);
       setControlMessage(data.message || "Game has been reset.");
+      setOverrideMode(false);
     });
 
     socket.on("connect_error", (error) => {
@@ -340,6 +344,13 @@ const HostGamePage: React.FC = () => {
   };
 
   const handleOverrideAnswer = () => {
+    if (game) {
+      setOverrideMode(true);
+      setControlMessage("Select the correct answer");
+    }
+  };
+
+  const handleSelectOverride = (answerIndex: number) => {
     if (game && socketRef.current) {
       const teamKey = game.gameState.currentTurn as "team1" | "team2";
       const teamId = game.teams.find((t) =>
@@ -347,7 +358,10 @@ const HostGamePage: React.FC = () => {
       )?.id;
       if (!teamId) return;
       const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
-      const points = 10; // simple override amount
+      const answer = getCurrentQuestion(game).answers[answerIndex];
+      const points =
+        game.currentRound === 0 ? answer.score : answer.score * game.currentRound;
+
       socketRef.current.emit("override-answer", {
         gameCode,
         teamId,
@@ -355,7 +369,11 @@ const HostGamePage: React.FC = () => {
         questionNumber,
         isCorrect: true,
         pointsAwarded: points,
+        answerIndex,
       });
+
+      setOverrideMode(false);
+      setControlMessage("");
     }
   };
 
@@ -534,6 +552,8 @@ const HostGamePage: React.FC = () => {
             variant="host"
             isHost={true}
             controlMessage={controlMessage}
+            overrideMode={overrideMode}
+            onSelectAnswer={handleSelectOverride}
           />
 
           {/* Host Controls - CLEAN VERSION */}

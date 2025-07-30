@@ -247,7 +247,8 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
     round: number,
     questionNumber: number,
     isCorrect: boolean,
-    points: number
+    points: number,
+    answerIndex: number
   ) => {
     if (socketRef.current) {
       socketRef.current.emit("override-answer", {
@@ -257,6 +258,7 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
         questionNumber,
         isCorrect,
         pointsAwarded: points,
+        answerIndex,
       });
     }
   };

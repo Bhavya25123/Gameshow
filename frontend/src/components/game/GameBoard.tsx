@@ -5,19 +5,23 @@ import { getCurrentQuestion } from "../../utils/gameHelper";
 interface GameBoardProps {
   game: Game;
   onRevealAnswer?: (answerIndex: number) => void;
+  onSelectAnswer?: (answerIndex: number) => void;
   onNextQuestion?: () => void;
   isHost?: boolean;
   variant?: "host" | "player";
   controlMessage?: string;
+  overrideMode?: boolean;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
   game,
   onRevealAnswer,
+  onSelectAnswer,
   onNextQuestion,
   isHost = false,
   variant = "host",
   controlMessage,
+  overrideMode = false,
 }) => {
   const currentQuestion = getCurrentQuestion(game);
 
@@ -156,10 +160,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
               answer.revealed
                 ? "bg-gradient-to-r from-green-600/30 to-emerald-600/30 border-green-400 animate-pulse"
                 : "hover:border-blue-400"
-            } ${isHost && !answer.revealed ? "cursor-pointer" : ""}`}
-            onClick={() =>
-              isHost && !answer.revealed && onRevealAnswer?.(index)
-            }
+            } ${
+              isHost && (!answer.revealed || overrideMode) ? "cursor-pointer" : ""
+            }`}
+            onClick={() => {
+              if (overrideMode) {
+                onSelectAnswer?.(index);
+              } else if (isHost && !answer.revealed) {
+                onRevealAnswer?.(index);
+              }
+            }}
           >
             <span className="answer-text">
               {/* HOST ALWAYS SEES THE ANSWER TEXT */}
@@ -199,10 +209,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
       </div>
 
       {/* Host Control Message */}
-      {isHost && controlMessage && (
+      {isHost && (controlMessage || overrideMode) && (
         <div className="glass-card host-controls">
           <div className="text-center">
-            <div className="text-xs text-blue-400">{controlMessage}</div>
+            {overrideMode && (
+              <div className="text-xs text-yellow-300 mb-1">
+                Select an answer to override
+              </div>
+            )}
+            {controlMessage && (
+              <div className="text-xs text-blue-400">{controlMessage}</div>
+            )}
           </div>
         </div>
       )}

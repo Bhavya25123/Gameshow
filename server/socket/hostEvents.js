@@ -9,6 +9,7 @@ import {
   updateQuestionData,
   advanceGameState,
   overrideAnswer,
+  getGameWinner,
 } from "../services/gameService.js";
 import { handleGameStateAdvancement } from "./playerEvents.js";
 
@@ -127,7 +128,6 @@ export function setupHostEvents(socket, io) {
           console.log(`🆕 Round ${updatedGame.currentRound} started`);
         } else if (updatedGame.status === "finished") {
           // Game finished after round 3
-          const { getGameWinner, calculateRoundSummary } = require("../services/gameService.js");
           const winner = getGameWinner(updatedGame);
           const roundSummary = calculateRoundSummary(updatedGame);
 
@@ -234,7 +234,7 @@ export function setupHostEvents(socket, io) {
 
   // Host overrides a player's answer
   socket.on("override-answer", (data) => {
-    const { gameCode, teamId, round, questionNumber, isCorrect, pointsAwarded } = data;
+    const { gameCode, teamId, round, questionNumber, isCorrect, pointsAwarded, answerIndex } = data;
     const game = getGame(gameCode);
 
     if (game && game.hostId === socket.id) {
@@ -244,7 +244,8 @@ export function setupHostEvents(socket, io) {
         round,
         questionNumber,
         isCorrect,
-        pointsAwarded
+        pointsAwarded,
+        answerIndex
       );
 
       if (result.success) {

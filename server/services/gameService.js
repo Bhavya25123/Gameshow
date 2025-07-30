@@ -384,7 +384,15 @@ export function overrideQuestionData(game, teamKey, round, questionNumber, isCor
 }
 
 // Host override an answer after submission
-export function overrideAnswer(gameCode, teamId, round, questionNumber, isCorrect, points) {
+export function overrideAnswer(
+  gameCode,
+  teamId,
+  round,
+  questionNumber,
+  isCorrect,
+  points,
+  answerIndex
+) {
   const game = games[gameCode];
   if (!game) return { success: false, message: "Game not found" };
   const team = game.teams.find((t) => t.id === teamId);
@@ -395,6 +403,20 @@ export function overrideAnswer(gameCode, teamId, round, questionNumber, isCorrec
   team.score += diff;
   team.currentRoundScore += diff;
   overrideQuestionData(game, teamKey, round, questionNumber, isCorrect, points);
+
+  // Reveal the specified answer if provided
+  if (typeof answerIndex === "number") {
+    const question = game.questions.find(
+      (q) =>
+        q.teamAssignment === teamKey &&
+        q.round === round &&
+        q.questionNumber === questionNumber
+    );
+    if (question && question.answers[answerIndex]) {
+      question.answers[answerIndex].revealed = true;
+    }
+  }
+
   updateGame(gameCode, game);
   return { success: true, game, teamId, teamName: team.name, round, questionNumber, pointsAwarded: points, isCorrect };
 }
