@@ -119,11 +119,15 @@ const JoinGamePage: React.FC = () => {
       }
 
       setGame(data.game);
-      setGameMessage(
-        `Game started! ${
-          data.activeTeam === "team1" ? "Team 1" : "Team 2"
-        } goes first.`
-      );
+      if (data.activeTeam) {
+        setGameMessage(
+          `Game started! ${
+            data.activeTeam === "team1" ? "Team 1" : "Team 2"
+          } goes first.`
+        );
+      } else {
+        setGameMessage("Game started! Buzz in for the toss-up question.");
+      }
     },
     onAnswerCorrect: (data: any) => {
       console.log("Answer correct event received (single attempt):", data);

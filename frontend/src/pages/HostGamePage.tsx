@@ -107,11 +107,15 @@ const HostGamePage: React.FC = () => {
     socket.on("game-started", (data) => {
       console.log("🚀 Single-attempt game started with question tracking!");
       setGame(data.game);
-      setControlMessage(
-        `Game started! ${
-          data.activeTeam === "team1" ? "Team 1" : "Team 2"
-        } goes first. Each question allows only 1 attempt.`
-      );
+      if (data.activeTeam) {
+        setControlMessage(
+          `Game started! ${
+            data.activeTeam === "team1" ? "Team 1" : "Team 2"
+          } goes first. Each question allows only 1 attempt.`
+        );
+      } else {
+        setControlMessage("Game started! Buzz in for the toss-up question.");
+      }
     });
 
     socket.on("player-joined", (data) => {

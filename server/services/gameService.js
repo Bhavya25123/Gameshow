@@ -321,7 +321,8 @@ export function startGame(gameCode) {
   if (!game) return null;
 
   game.status = "active";
-  game.gameState.currentTurn = "team1"; // Team 1 starts
+  // No team is active during the toss-up until a buzz occurs
+  game.gameState.currentTurn = null;
   game.gameState.awaitingAnswer = true;
   game.gameState.canAdvance = false;
 
@@ -816,8 +817,11 @@ export function getGameWinner(game) {
 
   if (!team1 || !team2) return null;
 
-  if (team1.score > team2.score) return team1;
-  if (team2.score > team1.score) return team2;
+  const team1Total = team1.roundScores.reduce((sum, s) => sum + s, 0);
+  const team2Total = team2.roundScores.reduce((sum, s) => sum + s, 0);
+
+  if (team1Total > team2Total) return team1;
+  if (team2Total > team1Total) return team2;
   return null; // Tie
 }
 

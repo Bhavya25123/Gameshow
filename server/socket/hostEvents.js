@@ -177,27 +177,15 @@ export function setupHostEvents(socket, io) {
           byHost: true,
         });
 
-        // Wait a moment so players can see the revealed answers
-        setTimeout(() => {
-          const advancedGame = advanceGameState(gameCode);
-          if (advancedGame) {
-            handleGameStateAdvancement(gameCode, advancedGame, io, {
-              teamName: "Host",
-              game,
-            });
+        // Allow host to manually advance like a normal question
+        game.gameState.canAdvance = true;
+        const updatedGame = updateGame(gameCode, game);
 
-            io.to(gameCode).emit("question-forced", {
-              game: advancedGame,
-              currentQuestion: getCurrentQuestion(advancedGame),
-              activeTeam: advancedGame.gameState.currentTurn,
-              byHost: true,
-            });
-
-            console.log(
-              `⚠️ Host forced advance to question ${advancedGame.currentQuestionIndex + 1}`
-            );
-          }
-        }, 2000);
+        io.to(gameCode).emit("question-complete", {
+          game: updatedGame,
+          currentQuestion: getCurrentQuestion(updatedGame),
+        });
+        console.log(`⚠️ Host forced question completion, awaiting next command`);
       }
     }
   });
