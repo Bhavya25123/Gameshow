@@ -95,6 +95,11 @@ export const getTeamColorClasses = (teamIndex: number) => {
   return colors[teamIndex] || colors[0];
 };
 
+// Get total score from all regular rounds (ignoring toss-up)
+export const getTeamRoundTotal = (team: Team): number => {
+  return team.roundScores.reduce((sum, s) => sum + s, 0);
+};
+
 // Validate answer match
 export const levenshtein = (a: string, b: string): number => {
   const matrix = [] as number[][];

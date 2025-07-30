@@ -1,6 +1,6 @@
 import React from "react";
 import { Team } from "../../types";
-import { getTeamColorClasses } from "../../utils/gameHelper";
+import { getTeamColorClasses, getTeamRoundTotal } from "../../utils/gameHelper";
 
 interface QuestionStatus {
   firstAttemptCorrect: boolean | null; // true = correct, false = incorrect, null = not attempted
@@ -242,7 +242,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
         {/* Total Game Score Display (BOTTOM) */}
         <div className="bg-white text-black rounded px-2 py-1 text-center">
           <div className="text-xl font-bold">
-            {team.score}
+            {getTeamRoundTotal(team)}
           </div>
           <div className="text-xs">Total Score</div>
         </div>

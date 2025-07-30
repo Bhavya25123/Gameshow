@@ -130,12 +130,12 @@ export function calculateRoundSummary(game) {
     teamScores: {
       team1: {
         roundScore: team1.currentRoundScore,
-        totalScore: team1.score,
+        totalScore: team1.roundScores.reduce((sum, s) => sum + s, 0),
         teamName: team1.name,
       },
       team2: {
         roundScore: team2.currentRoundScore,
-        totalScore: team2.score,
+        totalScore: team2.roundScores.reduce((sum, s) => sum + s, 0),
         teamName: team2.name,
       },
     },
@@ -174,12 +174,12 @@ export function calculateTossUpSummary(game) {
     teamScores: {
       team1: {
         roundScore: team1Answer ? team1Answer.score : 0,
-        totalScore: team1 ? team1.score : 0,
+        totalScore: team1 ? team1.roundScores.reduce((sum, s) => sum + s, 0) : 0,
         teamName: team1 ? team1.name : "Team 1",
       },
       team2: {
         roundScore: team2Answer ? team2Answer.score : 0,
-        totalScore: team2 ? team2.score : 0,
+        totalScore: team2 ? team2.roundScores.reduce((sum, s) => sum + s, 0) : 0,
         teamName: team2 ? team2.name : "Team 2",
       },
     },

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Team } from "../../types";
 import { ROUTES } from "../../utils/constants";
+import { getTeamRoundTotal } from "../../utils/gameHelper";
 import AnimatedCard from "../common/AnimatedCard";
 import Button from "../common/Button";
 
@@ -27,8 +28,7 @@ const GameResults: React.FC<GameResultsProps> = ({
   };
 
   // Helper to get total score excluding toss-up
-  const getTeamTotal = (team: Team) =>
-    team.roundScores.reduce((sum, s) => sum + s, 0);
+  const getTeamTotal = (team: Team) => getTeamRoundTotal(team);
 
   // Calculate final winner using only round scores
   const getFinalWinner = () => {

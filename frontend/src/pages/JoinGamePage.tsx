@@ -241,6 +241,7 @@ const JoinGamePage: React.FC = () => {
         setGame(data.game);
       }
       if (player?.id === data.playerId) setHasBuzzed(true);
+      setGameMessage(`${data.teamName} buzzed in!`);
     },
     onAnswersRevealed: (data: any) => {
       console.log("All answers revealed:", data);
