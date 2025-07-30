@@ -1,6 +1,6 @@
 import React from "react";
 import { Team } from "../../types";
-import { getTeamColorClasses } from "../../utils/gameHelper";
+import { getTeamColorClasses, formatRoundLabel } from "../../utils/gameHelper";
 
 interface QuestionStatus {
   firstAttemptCorrect: boolean | null; // true = correct, false = incorrect, null = not attempted
@@ -212,7 +212,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
         {/* Current Round Question Progress */}
         <div className="glass-card p-2 mb-3 bg-gradient-to-r from-red-600/20 to-red-700/20 border-red-500/30">
           <h4 className="text-sm font-bold text-red-300 mb-2 text-center">
-            Round {currentRound}
+            {formatRoundLabel(currentRound)}
           </h4>
           
           {/* Question Progress Indicators */}

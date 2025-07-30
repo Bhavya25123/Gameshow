@@ -1,7 +1,7 @@
 import React from "react";
 import { Game } from "../../types";
 import Button from "../common/Button";
-import { getCurrentQuestion } from "../../utils/gameHelper";
+import { getCurrentQuestion, formatRoundLabel } from "../../utils/gameHelper";
 
 interface GameBoardProps {
   game: Game;
@@ -72,7 +72,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           <div className="flex justify-between items-center">
             <div>
               <h2 className="font-bold">
-                Round {game.currentRound} • {currentQuestion.questionCategory}
+                {formatRoundLabel(game.currentRound)} • {currentQuestion.questionCategory}
               </h2>
               <div className="text-xs text-slate-400">
                 Question {game.currentQuestionIndex + 1} of{" "}
@@ -137,7 +137,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <div className="flex justify-between items-center">
           <div>
             <h2 className="font-bold">
-              Round {game.currentRound} • {currentQuestion.questionCategory}
+              {formatRoundLabel(game.currentRound)} • {currentQuestion.questionCategory}
             </h2>
             <div className="text-xs text-slate-400">
               Question {game.currentQuestionIndex + 1} of {game.questions.length}

@@ -158,8 +158,7 @@ export function setupHostEvents(socket, io) {
 
         // Record skipped question as incorrect
         const teamKey = game.gameState.currentTurn;
-        const questionNumber =
-          game.gameState.questionsAnswered[teamKey] + 1;
+        const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
         updateQuestionData(
           game,
           teamKey,
@@ -169,6 +168,9 @@ export function setupHostEvents(socket, io) {
           0
         );
 
+        // Allow host to advance manually
+        game.gameState.canAdvance = true;
+
         updateGame(gameCode, game);
 
         io.to(gameCode).emit("answers-revealed", {
@@ -177,27 +179,12 @@ export function setupHostEvents(socket, io) {
           byHost: true,
         });
 
-        // Wait a moment so players can see the revealed answers
-        setTimeout(() => {
-          const advancedGame = advanceGameState(gameCode);
-          if (advancedGame) {
-            handleGameStateAdvancement(gameCode, advancedGame, io, {
-              teamName: "Host",
-              game,
-            });
+        io.to(gameCode).emit("question-complete", {
+          game,
+          currentQuestion,
+        });
 
-            io.to(gameCode).emit("question-forced", {
-              game: advancedGame,
-              currentQuestion: getCurrentQuestion(advancedGame),
-              activeTeam: advancedGame.gameState.currentTurn,
-              byHost: true,
-            });
-
-            console.log(
-              `⚠️ Host forced advance to question ${advancedGame.currentQuestionIndex + 1}`
-            );
-          }
-        }, 2000);
+        console.log(`⚠️ Host revealed all answers for question ${game.currentQuestionIndex + 1}`);
       }
     }
   });

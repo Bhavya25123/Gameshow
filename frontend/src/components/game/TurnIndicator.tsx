@@ -1,5 +1,6 @@
 import React from "react";
 import { Team, Question } from "../../types";
+import { formatRoundLabel } from "../../utils/gameHelper";
 
 interface TurnIndicatorProps {
   currentTeam: "team1" | "team2" | null;
@@ -36,7 +37,7 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
             🎯 {activeTeam?.name}'s Turn
           </h3>
           <p className="text-sm text-slate-300">
-            Question {questionNumber} of 3 • Round {round}
+            Question {questionNumber} of 3 • {formatRoundLabel(round)}
           </p>
           <p className="text-xs text-slate-400 mt-1">
             {waitingTeam?.name} is waiting
@@ -60,7 +61,9 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
           <div className="bg-slate-700/30 rounded-lg p-3">
             <div className="text-lg font-semibold text-slate-300">Round</div>
-            <div className="text-2xl font-bold text-orange-400">{round}</div>
+            <div className="text-2xl font-bold text-orange-400">
+              {formatRoundLabel(round)}
+            </div>
           </div>
 
           <div className="bg-slate-700/30 rounded-lg p-3">

@@ -321,20 +321,23 @@ export function startGame(gameCode) {
   if (!game) return null;
 
   game.status = "active";
-  game.gameState.currentTurn = "team1"; // Team 1 starts
   game.gameState.awaitingAnswer = true;
   game.gameState.canAdvance = false;
 
-  // Set to first question (should be team1's first question)
-  const firstQuestion = game.questions.find(
-    (q) =>
-      q.teamAssignment === "team1" && q.round === 1 && q.questionNumber === 1
-  );
+  if (game.currentRound === 0) {
+    game.gameState.currentTurn = null;
+  } else {
+    game.gameState.currentTurn = "team1";
 
-  if (firstQuestion) {
-    game.currentQuestionIndex = game.questions.findIndex(
-      (q) => q._id === firstQuestion._id
+    const firstQuestion = game.questions.find(
+      (q) => q.teamAssignment === "team1" && q.round === 1 && q.questionNumber === 1
     );
+
+    if (firstQuestion) {
+      game.currentQuestionIndex = game.questions.findIndex(
+        (q) => q._id === firstQuestion._id
+      );
+    }
   }
 
   updateTeamActiveStatus(game);

@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { RoundSummary, Team } from "../../types";
 import AnimatedCard from "../common/AnimatedCard";
 import Button from "../common/Button";
+import { formatRoundLabel } from "../../utils/gameHelper";
 import confetti from "canvas-confetti";
 
 interface RoundSummaryProps {
@@ -286,7 +287,7 @@ const RoundSummaryComponent: React.FC<RoundSummaryProps> = ({
                   ))}
                 </div>
                 <div className="text-xs text-slate-500 mt-2">
-                  Round {round} of 3 Complete
+                  {formatRoundLabel(round)} of 3 Complete
                 </div>
               </div>
             )}

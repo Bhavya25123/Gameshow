@@ -4,6 +4,7 @@ import { Team } from "../../types";
 import { ROUTES } from "../../utils/constants";
 import AnimatedCard from "../common/AnimatedCard";
 import Button from "../common/Button";
+import { formatRoundLabel } from "../../utils/gameHelper";
 
 interface GameResultsProps {
   teams: Team[];
@@ -115,7 +116,7 @@ const GameResults: React.FC<GameResultsProps> = ({
                           
                           return (
                             <div key={round} className="flex justify-between items-center">
-                              <span className="text-sm text-slate-400">Round {round}:</span>
+                              <span className="text-sm text-slate-400">{formatRoundLabel(round)}:</span>
                               <span className={`font-bold ${wonRound ? 'text-yellow-400' : 'text-slate-300'}`}>
                                 {roundScore} {wonRound && '👑'}
                               </span>

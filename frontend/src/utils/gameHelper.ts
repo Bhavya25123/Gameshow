@@ -17,6 +17,10 @@ export const getCurrentQuestion = (game: Game | null): Question | null => {
   return null;
 };
 
+export const formatRoundLabel = (round: number): string => {
+  return round === 0 ? "Toss-up Round" : `Round ${round}`;
+};
+
 // Format timer display
 export const formatTimer = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
