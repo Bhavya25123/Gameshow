@@ -125,17 +125,34 @@ export function calculateRoundSummary(game) {
     (t) => t.id.includes("team2") || t.name.includes("2")
   );
 
+  const team1BaseTotal = team1.roundScores.reduce((sum, s) => sum + s, 0);
+  const team2BaseTotal = team2.roundScores.reduce((sum, s) => sum + s, 0);
+
+  const includeCurrentRound =
+    game.status === "round-summary" && round > 0;
+
+  const team1Total =
+    team1BaseTotal +
+    (includeCurrentRound && team1.roundScores[round - 1] === 0
+      ? team1.currentRoundScore
+      : 0);
+  const team2Total =
+    team2BaseTotal +
+    (includeCurrentRound && team2.roundScores[round - 1] === 0
+      ? team2.currentRoundScore
+      : 0);
+
   return {
     round,
     teamScores: {
       team1: {
         roundScore: team1.currentRoundScore,
-        totalScore: team1.roundScores.reduce((sum, s) => sum + s, 0),
+        totalScore: team1Total,
         teamName: team1.name,
       },
       team2: {
         roundScore: team2.currentRoundScore,
-        totalScore: team2.roundScores.reduce((sum, s) => sum + s, 0),
+        totalScore: team2Total,
         teamName: team2.name,
       },
     },

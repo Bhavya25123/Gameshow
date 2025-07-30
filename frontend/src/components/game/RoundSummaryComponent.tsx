@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { RoundSummary, Team } from "../../types";
-import { getTeamRoundTotal } from "../../utils/gameHelper";
 import AnimatedCard from "../common/AnimatedCard";
 import Button from "../common/Button";
 import confetti from "canvas-confetti";
