@@ -184,7 +184,13 @@ const RoundSummaryComponent: React.FC<RoundSummaryProps> = ({
                   </span>
                 </div>
                 <span className="text-lg font-bold text-blue-700">
-                  {teamScores.team1.totalScore > teamScores.team2.totalScore
+                  {round === 0
+                    ? teamScores.team1.roundScore > teamScores.team2.roundScore
+                      ? `${teamScores.team1.teamName} (${teamScores.team1.roundScore} pts)`
+                      : teamScores.team2.roundScore > teamScores.team1.roundScore
+                      ? `${teamScores.team2.teamName} (${teamScores.team2.roundScore} pts)`
+                      : "It's a tie!"
+                    : teamScores.team1.totalScore > teamScores.team2.totalScore
                     ? `${teamScores.team1.teamName} (${teamScores.team1.totalScore} pts)`
                     : teamScores.team2.totalScore > teamScores.team1.totalScore
                     ? `${teamScores.team2.teamName} (${teamScores.team2.totalScore} pts)`
