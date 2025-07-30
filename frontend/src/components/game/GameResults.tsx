@@ -72,18 +72,19 @@ const GameResults: React.FC<GameResultsProps> = ({
             ) : (
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black p-6 rounded-2xl mb-4">
                 <h2 className="text-4xl font-bold mb-2">🏆 WINNER 🏆</h2>
-                <p className="text-3xl font-bold">{teams[finalWinner].name}</p>
-                <p className="text-xl mt-2">Final Score: {getTeamTotal(teams[finalWinner])} points</p>
+                <p className="text-3xl font-bold">{teams[(finalWinner as number)].name}</p>
+                <p className="text-xl mt-2">Final Score: {getTeamTotal(teams[finalWinner as number])} points</p>
               </div>
             )}
           </div>
 
           {/* DETAILED TEAM SUMMARY */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {teams
-              .sort((a, b) => getTeamTotal(b) - getTeamTotal(a))
+            {([...teams]
+              .sort((a, b) => getTeamTotal(b) - getTeamTotal(a)))
               .map((team, index) => {
-                const isWinner = finalWinner !== 'tie' && index === 0;
+                const isWinner =
+                  finalWinner !== 'tie' && team.id === teams[finalWinner as number]?.id;
                 const isTie = finalWinner === 'tie';
                 
                 return (

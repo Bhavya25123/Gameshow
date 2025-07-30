@@ -121,7 +121,7 @@ const HostGamePage: React.FC = () => {
     socket.on("buzzer-pressed", (data) => {
       console.log("🔔 Buzzer pressed:", data);
       setGame(data.game);
-      setControlMessage(`${data.teamName} buzzed in!`);
+      setControlMessage(`${data.teamName} buzzed in! It's ${data.teamName}'s turn.`);
     });
 
     socket.on("player-joined", (data) => {
