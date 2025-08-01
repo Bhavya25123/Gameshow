@@ -170,7 +170,7 @@ const HostGamePage: React.FC = () => {
     socket.on("remaining-cards-revealed", (data) => {
       console.log("👁️ Remaining cards revealed:", data);
       setGame(data.game);
-      setControlMessage("All remaining cards revealed!");
+      // Preserve the previous message instead of showing a new one
     });
 
     socket.on("turn-changed", (data) => {

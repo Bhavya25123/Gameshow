@@ -88,7 +88,7 @@ const AudienceGamePage: React.FC = () => {
     },
     onRemainingCardsRevealed: (data: any) => {
       setGame(data.game);
-      setMessage({ text: "All cards revealed!", type: "info" });
+      // Keep the previous message rather than displaying a new one
     },
     onAnswersRevealed: (data: any) => {
       setGame(data.game);

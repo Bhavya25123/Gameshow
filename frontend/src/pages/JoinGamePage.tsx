@@ -148,7 +148,7 @@ const JoinGamePage: React.FC = () => {
     onRemainingCardsRevealed: (data: any) => {
       console.log("Remaining cards revealed:", data);
       setGame(data.game);
-      setGameMessage("All cards revealed!");
+      // Do not override the current message when cards are revealed
     },
     onTurnChanged: (data: any) => {
       console.log("Turn changed event received:", data);

@@ -489,9 +489,9 @@ header *,
 
 /* Larger message style for audience notifications */
 .audience-message {
-  font-size: 0.875rem !important;
-  padding: 0.75rem !important;
-  margin-top: 0.5rem !important;
+  font-size: 1rem !important;
+  padding: 1rem !important;
+  margin-top: 0.75rem !important;
 }
 
 /* LARGER HOST CONTROLS FOR BETTER USABILITY */
