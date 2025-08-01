@@ -15,6 +15,7 @@ export const ROUTES = {
   PLAYERHOME: "/PlayerHomePage",
   HOST: "/host",
   JOIN: "/join",
+  AUDIENCE: "/audience",
 } as const;
 
 export const GAME_STATUS = {
