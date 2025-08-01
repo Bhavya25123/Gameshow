@@ -22,6 +22,7 @@ export interface Game {
   questions: Question[];
   teams: Team[];
   players: Player[];
+  audiences?: { id: string; name: string }[];
   hostId: string | null;
   createdAt: Date;
   // Turn-based game state with 3-attempt rule

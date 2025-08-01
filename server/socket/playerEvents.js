@@ -1,6 +1,7 @@
 import {
   getGame,
   getPlayer,
+  getAudience,
   updatePlayer,
   submitAnswer,
   updateGame,
@@ -46,6 +47,18 @@ export function setupPlayerEvents(socket, io) {
       console.error(
         `❌ Player join failed: game=${!!game}, player=${!!player}`
       );
+    }
+  });
+
+  // Audience joins game room
+  socket.on("audience-join", (data) => {
+    const { gameCode, spectatorId } = data;
+    const game = getGame(gameCode);
+    const spectator = getAudience(spectatorId);
+    if (game && spectator) {
+      socket.join(gameCode);
+      spectator.socketId = socket.id;
+      console.log(`👀 Audience ${spectator.name} joined room ${gameCode}`);
     }
   });
 

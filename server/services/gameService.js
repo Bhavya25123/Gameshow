@@ -4,6 +4,7 @@ import { GameQuestion } from "../models/gameQuestion.model.js";
 // In-memory storage
 export let games = {};
 export let players = {};
+export let audiences = {};
 
 // Generate random game code
 export function generateGameCode() {
@@ -281,6 +282,7 @@ export async function createGame(updatedQuestions, tossUpQuestion) {
       },
     ],
     players: [],
+    audiences: [],
     hostId: null,
     createdAt: new Date(),
     buzzedTeamId: null,
@@ -708,6 +710,27 @@ export function joinGame(gameCode, playerName) {
   return { playerId, game: games[gameCode] };
 }
 
+// Join as an audience member
+export function joinAudience(gameCode, spectatorName) {
+  if (!games[gameCode]) {
+    throw new Error("Game not found");
+  }
+
+  const spectatorId = uuidv4();
+  const spectator = {
+    id: spectatorId,
+    name: spectatorName,
+    gameCode,
+    connected: true,
+  };
+
+  audiences[spectatorId] = spectator;
+  games[gameCode].audiences.push(spectator);
+
+  console.log(`👀 Audience joined: ${spectatorName} in game ${gameCode}`);
+  return { spectatorId, game: games[gameCode] };
+}
+
 // Get game by code
 export function getGame(gameCode) {
   return games[gameCode] || null;
@@ -716,6 +739,10 @@ export function getGame(gameCode) {
 // Get player by ID
 export function getPlayer(playerId) {
   return players[playerId] || null;
+}
+
+export function getAudience(spectatorId) {
+  return audiences[spectatorId] || null;
 }
 
 // Update game

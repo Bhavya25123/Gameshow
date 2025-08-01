@@ -284,6 +284,12 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
     }
   };
 
+  const audienceJoinGame = (gameCode: string, spectatorId: string) => {
+    if (socketRef.current) {
+      socketRef.current.emit("audience-join", { gameCode, spectatorId });
+    }
+  };
+
   const submitAnswer = (gameCode: string, playerId: string, answer: string) => {
     if (socketRef.current) {
       console.log("📝 Submitting single attempt answer:", { gameCode, playerId, answer });
@@ -330,6 +336,7 @@ export const useSocket = (callbacks: SocketCallbacks = {}) => {
     requestPlayersList,
     // Player actions
     playerJoinGame,
+    audienceJoinGame,
     submitAnswer,
     joinTeam,
   };
