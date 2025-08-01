@@ -57,19 +57,29 @@ const AudienceGamePage: React.FC = () => {
         setMessage("Game started! Buzz in for the toss-up question.");
       }
     },
+    onPlayerBuzzed: (data: any) => {
+      setGame(data.game);
+      setMessage(`${data.teamName} buzzed in! ${data.playerName}, answer now!`);
+    },
     onAnswerCorrect: (data: any) => {
       setGame(data.game);
       setMessage(
-        `✅ ${data.playerName} answered correctly! +${data.pointsAwarded} points.`
+        `✅ ${data.teamName} answered "${data.submittedText}" correctly! +${data.pointsAwarded} points.`
       );
     },
     onAnswerIncorrect: (data: any) => {
       setGame(data.game);
-      setMessage(`❌ ${data.playerName} answered incorrectly.`);
+      setMessage(
+        `❌ ${data.teamName} answered "${data.submittedText}" incorrectly.`
+      );
     },
     onRemainingCardsRevealed: (data: any) => {
       setGame(data.game);
       setMessage("All cards revealed!");
+    },
+    onAnswersRevealed: (data: any) => {
+      setGame(data.game);
+      setMessage("All answers have been revealed!");
     },
     onTurnChanged: (data: any) => {
       setGame(data.game);
