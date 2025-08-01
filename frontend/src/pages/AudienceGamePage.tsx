@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import AudienceJoinForm from "../components/forms/AudienceJoinForm";
 import GameBoard from "../components/game/GameBoard";
@@ -6,6 +6,7 @@ import TeamPanel from "../components/game/TeamPanel";
 import TurnIndicator from "../components/game/TurnIndicator";
 import RoundSummaryComponent from "../components/game/RoundSummaryComponent";
 import GameResults from "../components/game/GameResults";
+import PlayerList from "../components/game/PlayerList";
 import { useSocket } from "../hooks/useSocket";
 import { Game, RoundSummary, RoundData } from "../types";
 import { getCurrentQuestion } from "../utils/gameHelper";
@@ -41,7 +42,7 @@ const AudienceGamePage: React.FC = () => {
     return game.gameState.questionData[teamKey];
   };
 
-  const { connect, audienceJoinGame } = useSocket({
+  const { connect, audienceJoinGame, requestPlayersList } = useSocket({
     onAudienceJoined: (data: any) => {
       setGame(data.game);
     },
@@ -127,6 +128,19 @@ const AudienceGamePage: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (game && game.status === "waiting") {
+      requestPlayersList(game.code);
+      interval = setInterval(() => {
+        requestPlayersList(game.code);
+      }, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [game, requestPlayersList]);
+
   const joinGame = async () => {
     if (!gameCode.trim()) {
       setError("Please enter a game code");
@@ -163,8 +177,14 @@ const AudienceGamePage: React.FC = () => {
   if (game.status === "waiting") {
     return (
       <PageLayout gameCode={game.code}>
-        <div className="glass-card p-6 text-center">
-          <p className="text-xl text-slate-300">Waiting for the host to start...</p>
+        <div className="max-w-4xl mx-auto">
+          <div className="glass-card p-6 text-center mb-6">
+            <p className="text-xl text-slate-300 mb-2">Waiting for the host to start…</p>
+            <p className="text-sm text-slate-500">Game code: {game.code}</p>
+          </div>
+          {game.players.length > 0 && (
+            <PlayerList players={game.players} teams={game.teams} variant="waiting" />
+          )}
         </div>
       </PageLayout>
     );
@@ -225,7 +245,7 @@ const AudienceGamePage: React.FC = () => {
             isHost={false}
           />
           {messages.length > 0 && (
-            <div className="glass-card p-4 text-center mt-2 text-blue-300 text-base max-h-48 overflow-y-auto space-y-1">
+            <div className="glass-card p-4 text-center mt-2 text-blue-300 text-base max-h-60 overflow-y-auto space-y-1">
               {messages.map((msg, idx) => (
                 <div key={idx}>{msg}</div>
               ))}
