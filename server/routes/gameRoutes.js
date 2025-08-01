@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { joinGame, getGameStats, createGame } from "../services/gameService.js";
+import { joinGame, joinAudience, getGameStats, createGame } from "../services/gameService.js";
 import { ApiError } from "../utils/ApiError.js";
 import { prepareGameQuestions } from "../services/loadQuestionFromDB.js";
 
@@ -108,6 +108,28 @@ router.post("/api/join-game", (req, res) => {
         error: "Failed to join game",
         details: error.message,
       });
+    }
+  }
+});
+
+// Join as audience
+router.post("/api/join-audience", (req, res) => {
+  try {
+    const { gameCode, spectatorName } = req.body;
+    if (!gameCode || !spectatorName) {
+      return res.status(400).json({ error: "Game code and name are required" });
+    }
+    const { spectatorId, game } = joinAudience(
+      gameCode.toUpperCase(),
+      spectatorName.trim()
+    );
+    res.json({ spectatorId, game, success: true });
+  } catch (error) {
+    console.error("Error joining audience:", error);
+    if (error.message === "Game not found") {
+      res.status(404).json({ error: "Game not found" });
+    } else {
+      res.status(500).json({ error: "Failed to join audience" });
     }
   }
 });

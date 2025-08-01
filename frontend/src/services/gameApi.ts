@@ -19,6 +19,16 @@ export interface JoinGameResponse {
   game: any; // Game type from types
 }
 
+export interface JoinAudienceResponse {
+  spectatorId: string;
+  game: any;
+}
+
+export interface JoinAudienceRequest {
+  gameCode: string;
+  spectatorName: string;
+}
+
 export interface JoinGameRequest {
   gameCode: string;
   playerName: string;
@@ -40,6 +50,11 @@ export const gameApi = {
   // Join an existing game
   async joinGame(request: JoinGameRequest): Promise<JoinGameResponse> {
     const response = await apiClient.post("/api/join-game", request);
+    return response.data;
+  },
+
+  async joinAudience(request: JoinAudienceRequest): Promise<JoinAudienceResponse> {
+    const response = await apiClient.post("/api/join-audience", request);
     return response.data;
   },
 };
