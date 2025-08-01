@@ -17,7 +17,10 @@ const AudienceGamePage: React.FC = () => {
   const [error, setError] = useState("");
   const [game, setGame] = useState<Game | null>(null);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessage] = useState<
+    | { text: string; type: "info" | "success" | "error" }
+    | null
+  >(null);
 
   const getTeamQuestionData = (teamKey: "team1" | "team2"): RoundData => {
     if (!game?.gameState?.questionData?.[teamKey]) {
@@ -49,42 +52,51 @@ const AudienceGamePage: React.FC = () => {
     onGameStarted: (data: any) => {
       setGame(data.game);
       if (data.activeTeam) {
-        setMessage(
-          `Game started! ${
+        setMessage({
+          text: `Game started! ${
             data.activeTeam === "team1" ? "Team 1" : "Team 2"
-          } goes first.`
-        );
+          } goes first.`,
+          type: "info",
+        });
       } else {
-        setMessage("Game started! Buzz in for the toss-up question.");
+        setMessage({
+          text: "Game started! Buzz in for the toss-up question.",
+          type: "info",
+        });
       }
     },
     onPlayerBuzzed: (data: any) => {
       setGame(data.game);
-      setMessage(`${data.teamName} buzzed in! ${data.playerName}, answer now!`);
+      setMessage({
+        text: `🔔 ${data.teamName} buzzed in! ${data.playerName}, answer now!`,
+        type: "info",
+      });
     },
     onAnswerCorrect: (data: any) => {
       setGame(data.game);
-      setMessage(
-        `✅ ${data.teamName} answered "${data.submittedText}" correctly! +${data.pointsAwarded} points.`
-      );
+      setMessage({
+        text: `✅ ${data.teamName} answered "${data.submittedText}" correctly! +${data.pointsAwarded} points.`,
+        type: "success",
+      });
     },
     onAnswerIncorrect: (data: any) => {
       setGame(data.game);
-      setMessage(
-        `❌ ${data.teamName} answered "${data.submittedText}" incorrectly.`
-      );
+      setMessage({
+        text: `❌ ${data.teamName} answered "${data.submittedText}" incorrectly.`,
+        type: "error",
+      });
     },
     onRemainingCardsRevealed: (data: any) => {
       setGame(data.game);
-      setMessage("All cards revealed!");
+      setMessage({ text: "All cards revealed!", type: "info" });
     },
     onAnswersRevealed: (data: any) => {
       setGame(data.game);
-      setMessage("All answers have been revealed!");
+      setMessage({ text: "All answers have been revealed!", type: "info" });
     },
     onTurnChanged: (data: any) => {
       setGame(data.game);
-      setMessage(`Turn switched to ${data.teamName}!`);
+      setMessage({ text: `Turn switched to ${data.teamName}!`, type: "info" });
     },
     onNextQuestion: (data: any) => {
       setGame(data.game);
@@ -99,11 +111,12 @@ const AudienceGamePage: React.FC = () => {
     onRoundStarted: (data: any) => {
       setGame(data.game);
       setRoundSummary(null);
-      setMessage(
-        `Round ${data.round} started! ${
+      setMessage({
+        text: `Round ${data.round} started! ${
           data.activeTeam === "team1" ? "Team 1" : "Team 2"
-        } goes first.`
-      );
+        } goes first.`,
+        type: "info",
+      });
     },
     onGameOver: (data: any) => {
       setGame(data.game);
@@ -235,8 +248,8 @@ const AudienceGamePage: React.FC = () => {
             isHost={false}
           />
           {message && (
-            <div className="glass-card p-4 text-center mt-2 text-blue-300 text-base">
-              {message}
+            <div className={`glass-card audience-message game-message ${message.type}`}>
+              {message.text}
             </div>
           )}
         </div>
