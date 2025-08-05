@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import io, { Socket } from "socket.io-client";
 
 // Import components
@@ -37,6 +37,8 @@ const HostGamePage: React.FC = () => {
   const [overrideMode, setOverrideMode] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
+
+  const location = useLocation();
 
   // Hooks
   const { timer } = useTimer(game?.status === "active");
@@ -160,9 +162,28 @@ const HostGamePage: React.FC = () => {
     socket.on("answer-incorrect", (data) => {
       console.log("❌ Incorrect answer with question tracking:", data);
       setGame(data.game);
-      setControlMessage(
-        `❌ ${data.playerName} answered incorrectly. ${data.message}`
-      );
+      setControlMessage(`❌ ${data.playerName} answered incorrectly.`);
+
+      // Prompt host for score override
+      if (window.confirm("Override score for this answer?")) {
+        const input = window.prompt("Enter points to award", "0");
+        const points = input ? parseInt(input, 10) : 0;
+        if (!isNaN(points)) {
+          const round = data.game.currentRound;
+          const teamId = data.teamId;
+          const teamKey = teamId?.includes("team1") ? "team1" : "team2";
+          const questionNumber =
+            data.game.gameState.questionsAnswered[teamKey] + 1;
+          socketRef.current?.emit("override-answer", {
+            gameCode,
+            teamId,
+            round,
+            questionNumber,
+            isCorrect: true,
+            pointsAwarded: points,
+          });
+        }
+      }
     });
 
     socket.on("remaining-cards-revealed", (data) => {
@@ -268,7 +289,9 @@ const HostGamePage: React.FC = () => {
     socket.on("answer-overridden", (data) => {
       console.log("✅ Answer overridden:", data);
       setGame(data.game);
-      setControlMessage("Answer overridden by host.");
+      setControlMessage(
+        `Host awarded ${data.pointsAwarded} points to ${data.teamName}.`
+      );
       setOverrideMode(false);
     });
 
@@ -292,6 +315,17 @@ const HostGamePage: React.FC = () => {
 
     return socket;
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get("code");
+    if (code && !gameCode) {
+      const upper = code.toUpperCase();
+      setJoinCode(upper);
+      setGameCode(upper);
+      setupSocket(upper);
+    }
+  }, [location.search, gameCode, setupSocket]);
 
   const createGame = async () => {
     console.log(

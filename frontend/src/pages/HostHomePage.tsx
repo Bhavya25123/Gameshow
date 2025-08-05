@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
 import AnimatedCard from "../components/common/AnimatedCard";
 import Button from "../components/common/Button";
+import Input from "../components/common/Input";
 import { ROUTES } from "../utils/constants";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [joinCode, setJoinCode] = useState("");
 
   return (
     <PageLayout>
@@ -33,11 +35,31 @@ const HomePage: React.FC = () => {
                 </span>
               }
             >
-              
-              <span className="block text-sm text-blue-200 mt-1">
-                Create Room
-              </span>
+              <span className="block text-sm text-blue-200 mt-1">Create Room</span>
             </Button>
+          </AnimatedCard>
+          <AnimatedCard className="flex-1" delay={400}>
+            <div className="glass-card p-6 text-center">
+              <p className="mb-4 text-slate-300">Rejoin Game</p>
+              <Input
+                id="rejoinCode"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                variant="center"
+              />
+              <Button
+                onClick={() =>
+                  joinCode.trim() && navigate(`${ROUTES.HOST}?code=${joinCode}`)
+                }
+                variant="secondary"
+                size="xl"
+                className="w-full mt-4"
+              >
+                Rejoin
+              </Button>
+            </div>
           </AnimatedCard>
         </div>
       </div>

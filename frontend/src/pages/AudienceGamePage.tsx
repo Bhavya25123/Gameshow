@@ -85,6 +85,13 @@ const AudienceGamePage: React.FC = () => {
         type: "error",
       });
     },
+    onAnswerOverridden: (data: any) => {
+      setGame(data.game);
+      setMessage({
+        text: `✅ Host awarded ${data.pointsAwarded} points to ${data.teamName}.`,
+        type: "success",
+      });
+    },
     onRemainingCardsRevealed: (data: any) => {
       setGame(data.game);
       // Keep the previous message rather than displaying a new one

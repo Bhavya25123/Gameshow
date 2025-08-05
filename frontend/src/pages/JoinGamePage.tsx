@@ -246,7 +246,9 @@ const JoinGamePage: React.FC = () => {
     onAnswerOverridden: (data: any) => {
       console.log("Answer overridden:", data);
       setGame(data.game);
-      setGameMessage("Answer overridden by host.");
+      setGameMessage(
+        `Host awarded ${data.pointsAwarded} points to ${data.teamName}.`
+      );
     },
     onGameReset: (data: any) => {
       console.log("Game reset received:", data);
