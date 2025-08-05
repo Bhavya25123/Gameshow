@@ -11,6 +11,7 @@ import GameBoard from "../components/game/GameBoard";
 import GameResults from "../components/game/GameResults";
 import PlayerList from "../components/game/PlayerList";
 import GameCreationForm from "../components/forms/GameCreationForm";
+import HostJoinForm from "../components/forms/HostJoinForm";
 import Button from "../components/common/Button";
 import TurnIndicator from "../components/game/TurnIndicator";
 import RoundSummaryComponent from "../components/game/RoundSummaryComponent";
@@ -21,12 +22,15 @@ import gameApi from "../services/gameApi";
 
 // Import types and utils
 import { Game, Team, RoundSummary, RoundData } from "../types";
-import { getCurrentQuestion, getGameWinner } from "../utils/gameHelper";
+import { getCurrentQuestion, getGameWinner, getTeamName } from "../utils/gameHelper";
 import { ROUTES } from "../utils/constants";
 
 const HostGamePage: React.FC = () => {
   const [gameCode, setGameCode] = useState<string>("");
   const [game, setGame] = useState<Game | null>(null);
+  const [team1Name, setTeam1Name] = useState("");
+  const [team2Name, setTeam2Name] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [controlMessage, setControlMessage] = useState<string>("");
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
@@ -87,12 +91,7 @@ const HostGamePage: React.FC = () => {
 
       // Join as host immediately after connection
       console.log("👑 Joining as host...");
-      const defaultTeams = [
-        { name: "Team Red", members: ["", "", "", "", ""] },
-        { name: "Team Blue", members: ["", "", "", "", ""] },
-      ];
-
-      socket.emit("host-join", { gameCode, teams: defaultTeams });
+      socket.emit("host-join", { gameCode });
     });
 
     socket.on("host-joined", (gameData) => {
@@ -108,10 +107,9 @@ const HostGamePage: React.FC = () => {
       console.log("🚀 Single-attempt game started with question tracking!");
       setGame(data.game);
       if (data.activeTeam) {
+        const teamName = getTeamName(data.game, data.activeTeam);
         setControlMessage(
-          `Game started! ${
-            data.activeTeam === "team1" ? "Team 1" : "Team 2"
-          } goes first. Each question allows only 1 attempt.`
+          `Game started! ${teamName} goes first. Each question allows only 1 attempt.`
         );
       } else {
         setControlMessage("Game started! Buzz in for the toss-up question.");
@@ -230,10 +228,9 @@ const HostGamePage: React.FC = () => {
       console.log("🆕 New round started:", data);
       setGame(data.game);
       setRoundSummary(null);
+      const teamName = getTeamName(data.game, data.activeTeam);
       setControlMessage(
-        `Round ${data.round} started! ${
-          data.activeTeam === "team1" ? "Team 1" : "Team 2"
-        } goes first. Each question allows only 1 attempt.`
+        `Round ${data.round} started! ${teamName} goes first. Each question allows only 1 attempt.`
       );
     });
 
@@ -307,12 +304,17 @@ const HostGamePage: React.FC = () => {
       const testResponse = await gameApi.testConnection();
       console.log("✅ Server connection successful:", testResponse);
 
-      const response = await gameApi.createGame();
+      const response = await gameApi.createGame({
+        team1: team1Name.trim(),
+        team2: team2Name.trim(),
+      });
       console.log("✅ Game creation response:", response);
 
       const { gameCode: newGameCode } = response;
       setGameCode(newGameCode);
-      setControlMessage(`Game created successfully! Code: ${newGameCode}. Each question allows only 1 attempt.`);
+      setControlMessage(
+        `Game created successfully! Code: ${newGameCode}. Each question allows only 1 attempt.`
+      );
 
       setupSocket(newGameCode);
     } catch (error: unknown) {
@@ -334,6 +336,13 @@ const HostGamePage: React.FC = () => {
       }
     }
     setIsLoading(false);
+  };
+
+  const joinExistingGame = () => {
+    if (!joinCode.trim()) return;
+    const code = joinCode.trim().toUpperCase();
+    setGameCode(code);
+    setupSocket(code);
   };
 
   const handleStartGame = () => {
@@ -442,7 +451,22 @@ const HostGamePage: React.FC = () => {
   if (!gameCode) {
     return (
       <PageLayout>
-        <GameCreationForm onCreateGame={createGame} isLoading={isLoading} />
+        <div className="flex flex-col md:flex-row gap-6 justify-center">
+          <GameCreationForm
+            team1Name={team1Name}
+            team2Name={team2Name}
+            onTeam1Change={setTeam1Name}
+            onTeam2Change={setTeam2Name}
+            onCreateGame={createGame}
+            isLoading={isLoading}
+          />
+          <HostJoinForm
+            gameCode={joinCode}
+            onGameCodeChange={setJoinCode}
+            onJoin={joinExistingGame}
+            isLoading={isLoading}
+          />
+        </div>
         {controlMessage && (
           <div className="mt-4 text-center">
             <div className="text-blue-400">{controlMessage}</div>

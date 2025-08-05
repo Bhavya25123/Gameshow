@@ -9,7 +9,7 @@ import GameResults from "../components/game/GameResults";
 import PlayerList from "../components/game/PlayerList";
 import { useSocket } from "../hooks/useSocket";
 import { Game, RoundSummary, RoundData } from "../types";
-import { getCurrentQuestion } from "../utils/gameHelper";
+import { getCurrentQuestion, getTeamName } from "../utils/gameHelper";
 
 const AudienceGamePage: React.FC = () => {
   const [gameCode, setGameCode] = useState("");
@@ -52,10 +52,9 @@ const AudienceGamePage: React.FC = () => {
     onGameStarted: (data: any) => {
       setGame(data.game);
       if (data.activeTeam) {
+        const teamName = getTeamName(data.game, data.activeTeam);
         setMessage({
-          text: `Game started! ${
-            data.activeTeam === "team1" ? "Team 1" : "Team 2"
-          } goes first.`,
+          text: `Game started! ${teamName} goes first.`,
           type: "info",
         });
       } else {
@@ -111,10 +110,9 @@ const AudienceGamePage: React.FC = () => {
     onRoundStarted: (data: any) => {
       setGame(data.game);
       setRoundSummary(null);
+      const teamName = getTeamName(data.game, data.activeTeam);
       setMessage({
-        text: `Round ${data.round} started! ${
-          data.activeTeam === "team1" ? "Team 1" : "Team 2"
-        } goes first.`,
+        text: `Round ${data.round} started! ${teamName} goes first.`,
         type: "info",
       });
     },
