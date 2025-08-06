@@ -423,8 +423,8 @@ const HostGamePage: React.FC = () => {
   };
 
   const handleSelectOverride = (answerIndex: number) => {
-    if (pendingOverride && socketRef.current) {
-      const points = parseInt(overridePoints, 10) || 0;
+    if (pendingOverride && socketRef.current && currentQuestion) {
+      const points = currentQuestion.answers[answerIndex]?.score || 0;
       socketRef.current.emit("override-answer", {
         gameCode,
         teamId: pendingOverride.teamId,
