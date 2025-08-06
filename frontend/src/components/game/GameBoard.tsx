@@ -239,7 +239,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                   <Input
                     id="overridePoints"
                     type="number"
-                    value={overridePoints}
+                    value={overridePoints ?? ""}
                     onChange={(e) =>
                       onOverridePointsChange &&
                       onOverridePointsChange(e.target.value)
