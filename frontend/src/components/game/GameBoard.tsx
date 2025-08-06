@@ -1,6 +1,7 @@
 import React from "react";
 import { Game } from "../../types";
 import Button from "../common/Button";
+import Input from "../common/Input";
 import { getCurrentQuestion } from "../../utils/gameHelper";
 
 interface GameBoardProps {
@@ -12,6 +13,9 @@ interface GameBoardProps {
   variant?: "host" | "player";
   controlMessage?: string;
   overrideMode?: boolean;
+  overridePoints?: string;
+  onOverridePointsChange?: (value: string) => void;
+  onCancelOverride?: () => void;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -23,6 +27,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
   variant = "host",
   controlMessage,
   overrideMode = false,
+  overridePoints,
+  onOverridePointsChange,
+  onCancelOverride,
 }) => {
   const currentQuestion = getCurrentQuestion(game);
 
@@ -221,11 +228,40 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <div className="glass-card host-controls">
           <div className="text-center">
             {overrideMode && (
-              <div className="text-xs text-yellow-300 mb-1">
-                Select an answer to override
-              </div>
+              <>
+                <div className="text-xs text-yellow-300 mb-1">
+                  Select an answer to override
+                </div>
+                <div className="text-xs text-yellow-300 mb-2">
+                  Select the correct answer
+                </div>
+                <div className="flex justify-center items-center gap-2 mt-1">
+                  <Input
+                    id="overridePoints"
+                    type="number"
+                    value={overridePoints}
+                    onChange={(e) =>
+                      onOverridePointsChange &&
+                      onOverridePointsChange(e.target.value)
+                    }
+                    className="w-24 text-center"
+                    variant="center"
+                    placeholder="Award points"
+                  />
+                  {onCancelOverride && (
+                    <Button
+                      onClick={onCancelOverride}
+                      variant="secondary"
+                      size="sm"
+                      className="text-xs py-1 px-3"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </>
             )}
-            {controlMessage && (
+            {controlMessage && !overrideMode && (
               <div className="text-xs text-blue-400">{controlMessage}</div>
             )}
             {game.gameState.canAdvance && !overrideMode && (

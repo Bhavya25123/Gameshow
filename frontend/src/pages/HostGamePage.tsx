@@ -12,7 +12,6 @@ import GameResults from "../components/game/GameResults";
 import PlayerList from "../components/game/PlayerList";
 import GameCreationForm from "../components/forms/GameCreationForm";
 import Button from "../components/common/Button";
-import Input from "../components/common/Input";
 import TurnIndicator from "../components/game/TurnIndicator";
 import RoundSummaryComponent from "../components/game/RoundSummaryComponent";
 
@@ -392,39 +391,35 @@ const HostGamePage: React.FC = () => {
   };
 
   const handleOverrideAnswer = () => {
-    if (game) {
+    if (pendingOverride) {
       setOverrideMode(true);
-      setControlMessage("Select the correct answer");
+      setControlMessage("");
+      setOverridePoints("0");
     }
   };
 
   const handleSelectOverride = (answerIndex: number) => {
-    if (game && socketRef.current) {
-      const teamKey = game.gameState.currentTurn as "team1" | "team2";
-      const teamId = game.teams.find((t) =>
-        teamKey === "team1" ? t.id.includes("team1") : t.id.includes("team2")
-      )?.id;
-      if (!teamId) return;
-      const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
-      const currentQuestion = getCurrentQuestion(game);
-      if (!currentQuestion) return;
-      const answer = currentQuestion.answers[answerIndex];
-      const points =
-        game.currentRound === 0 ? answer.score : answer.score * game.currentRound;
-
+    if (pendingOverride && socketRef.current) {
+      const points = parseInt(overridePoints, 10) || 0;
       socketRef.current.emit("override-answer", {
         gameCode,
-        teamId,
-        round: game.currentRound,
-        questionNumber,
+        teamId: pendingOverride.teamId,
+        round: pendingOverride.round,
+        questionNumber: pendingOverride.questionNumber,
         isCorrect: true,
         pointsAwarded: points,
         answerIndex,
       });
-
+      setPendingOverride(null);
       setOverrideMode(false);
+      setOverridePoints("0");
       setControlMessage("");
     }
+  };
+
+  const handleCancelOverride = () => {
+    setOverrideMode(false);
+    setOverridePoints("0");
   };
 
 
@@ -612,52 +607,13 @@ const HostGamePage: React.FC = () => {
             isHost={true}
             controlMessage={controlMessage}
             overrideMode={overrideMode}
+            overridePoints={overridePoints}
+            onOverridePointsChange={setOverridePoints}
+            onCancelOverride={handleCancelOverride}
             onSelectAnswer={handleSelectOverride}
             onNextQuestion={handleNextQuestion}
           />
 
-          {/* Override Score Prompt */}
-          {pendingOverride && (
-            <div className="glass-card p-4 mt-2 text-center">
-              <p className="mb-3 text-slate-200">Override points for this answer?</p>
-              <div className="flex gap-2 justify-center">
-                <Input
-                  id="overridePoints"
-                  type="number"
-                  value={overridePoints}
-                  onChange={(e) => setOverridePoints(e.target.value)}
-                  className="w-24 text-center"
-                  variant="center"
-                />
-                <Button
-                  onClick={() => {
-                    const points = parseInt(overridePoints, 10) || 0;
-                    socketRef.current?.emit("override-answer", {
-                      gameCode,
-                      teamId: pendingOverride.teamId,
-                      round: pendingOverride.round,
-                      questionNumber: pendingOverride.questionNumber,
-                      isCorrect: true,
-                      pointsAwarded: points,
-                    });
-                    setPendingOverride(null);
-                    setOverridePoints("0");
-                  }}
-                  variant="primary"
-                  size="sm"
-                >
-                  Award
-                </Button>
-                <Button
-                  onClick={() => setPendingOverride(null)}
-                  variant="secondary"
-                  size="sm"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Host Controls - CLEAN VERSION */}
           <div className="glass-card p-3 mt-2">
@@ -682,14 +638,16 @@ const HostGamePage: React.FC = () => {
               >
                 ⏭️ Force Next
               </Button>
-              <Button
-                onClick={handleOverrideAnswer}
-                variant="secondary"
-                size="sm"
-                className="text-xs py-1 px-3"
-              >
-                ✅ Override
-              </Button>
+              {pendingOverride && !overrideMode && (
+                <Button
+                  onClick={handleOverrideAnswer}
+                  variant="secondary"
+                  size="sm"
+                  className="text-xs py-1 px-3"
+                >
+                  ✅ Override
+                </Button>
+              )}
               <Button
                 onClick={handleResetGame}
                 variant="secondary"
