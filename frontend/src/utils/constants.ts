@@ -14,6 +14,7 @@ export const ROUTES = {
   HOSTHOME: "/HostHomePage",
   PLAYERHOME: "/PlayerHomePage",
   HOST: "/host",
+  HOSTREJOIN: "/host/rejoin",
   JOIN: "/join",
   AUDIENCE: "/audience",
 } as const;

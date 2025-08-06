@@ -11,7 +11,6 @@ import GameBoard from "../components/game/GameBoard";
 import GameResults from "../components/game/GameResults";
 import PlayerList from "../components/game/PlayerList";
 import GameCreationForm from "../components/forms/GameCreationForm";
-import HostJoinForm from "../components/forms/HostJoinForm";
 import Button from "../components/common/Button";
 import Input from "../components/common/Input";
 import TurnIndicator from "../components/game/TurnIndicator";
@@ -31,7 +30,6 @@ const HostGamePage: React.FC = () => {
   const [game, setGame] = useState<Game | null>(null);
   const [team1Name, setTeam1Name] = useState("");
   const [team2Name, setTeam2Name] = useState("");
-  const [joinCode, setJoinCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [controlMessage, setControlMessage] = useState<string>("");
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
@@ -314,7 +312,6 @@ const HostGamePage: React.FC = () => {
     const code = params.get("code");
     if (code && !gameCode) {
       const upper = code.toUpperCase();
-      setJoinCode(upper);
       setGameCode(upper);
       setupSocket(upper);
     }
@@ -363,13 +360,6 @@ const HostGamePage: React.FC = () => {
       }
     }
     setIsLoading(false);
-  };
-
-  const joinExistingGame = () => {
-    if (!joinCode.trim()) return;
-    const code = joinCode.trim().toUpperCase();
-    setGameCode(code);
-    setupSocket(code);
   };
 
   const handleStartGame = () => {
@@ -478,19 +468,13 @@ const HostGamePage: React.FC = () => {
   if (!gameCode) {
     return (
       <PageLayout>
-        <div className="flex flex-col md:flex-row gap-6 justify-center">
+        <div className="flex justify-center">
           <GameCreationForm
             team1Name={team1Name}
             team2Name={team2Name}
             onTeam1Change={setTeam1Name}
             onTeam2Change={setTeam2Name}
             onCreateGame={createGame}
-            isLoading={isLoading}
-          />
-          <HostJoinForm
-            gameCode={joinCode}
-            onGameCodeChange={setJoinCode}
-            onJoin={joinExistingGame}
             isLoading={isLoading}
           />
         </div>

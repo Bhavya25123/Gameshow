@@ -38,13 +38,13 @@ const HomePage: React.FC = () => {
           </AnimatedCard>
           <AnimatedCard className="flex-1" delay={400}>
             <Button
-              onClick={() => navigate(ROUTES.AUDIENCE)}
+              onClick={() => navigate(ROUTES.HOSTREJOIN)}
               variant="secondary"
               size="xl"
               className="w-full py-6 text-xl group"
               icon={
                 <span className="text-3xl mr-3 group-hover:animate-bounce">
-                  🎥
+                  🔄
                 </span>
               }
             >
