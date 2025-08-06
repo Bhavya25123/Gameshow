@@ -16,6 +16,7 @@ interface GameBoardProps {
   overridePoints?: string;
   onOverridePointsChange?: (value: string) => void;
   onCancelOverride?: () => void;
+  onConfirmOverride?: () => void;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -30,6 +31,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   overridePoints,
   onOverridePointsChange,
   onCancelOverride,
+  onConfirmOverride,
 }) => {
   const currentQuestion = getCurrentQuestion(game);
 
@@ -229,11 +231,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
           <div className="text-center">
             {overrideMode && (
               <>
-                <div className="text-xs text-yellow-300 mb-1">
-                  Select an answer to override
-                </div>
                 <div className="text-xs text-yellow-300 mb-2">
-                  Select the correct answer
+                  Select an answer or enter points to award
                 </div>
                 <div className="flex justify-center items-center gap-2 mt-1">
                   <Input
@@ -248,6 +247,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     variant="center"
                     placeholder="Award points"
                   />
+                  {onConfirmOverride && (
+                    <Button
+                      onClick={onConfirmOverride}
+                      variant="primary"
+                      size="sm"
+                      className="text-xs py-1 px-3"
+                    >
+                      Award
+                    </Button>
+                  )}
                   {onCancelOverride && (
                     <Button
                       onClick={onCancelOverride}

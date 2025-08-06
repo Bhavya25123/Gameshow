@@ -176,6 +176,12 @@ const HostGamePage: React.FC = () => {
       setControlMessage(
         `✅ ${data.playerName} answered correctly! +${data.pointsAwarded} points for ${data.teamName}.`
       );
+
+      const round = data.game.currentRound;
+      const teamId = data.teamId;
+      const teamKey = teamId?.includes("team1") ? "team1" : "team2";
+      const questionNumber = data.game.gameState.questionsAnswered[teamKey] + 1;
+      setPendingOverride({ teamId, round, questionNumber });
     });
 
     socket.on("answer-incorrect", (data) => {
@@ -211,6 +217,9 @@ const HostGamePage: React.FC = () => {
       } else {
         setControlMessage(`Moving to next question.`);
       }
+      setPendingOverride(null);
+      setOverrideMode(false);
+      setOverridePoints("0");
     });
 
     socket.on("question-complete", (data) => {
@@ -432,6 +441,24 @@ const HostGamePage: React.FC = () => {
     }
   };
 
+  const handleConfirmOverride = () => {
+    if (pendingOverride && socketRef.current) {
+      const points = parseInt(overridePoints, 10) || 0;
+      socketRef.current.emit("override-answer", {
+        gameCode,
+        teamId: pendingOverride.teamId,
+        round: pendingOverride.round,
+        questionNumber: pendingOverride.questionNumber,
+        isCorrect: true,
+        pointsAwarded: points,
+      });
+      setPendingOverride(null);
+      setOverrideMode(false);
+      setOverridePoints("0");
+      setControlMessage("");
+    }
+  };
+
   const handleCancelOverride = () => {
     setOverrideMode(false);
     setOverridePoints("0");
@@ -625,6 +652,7 @@ const HostGamePage: React.FC = () => {
             overridePoints={overridePoints}
             onOverridePointsChange={setOverridePoints}
             onCancelOverride={handleCancelOverride}
+            onConfirmOverride={handleConfirmOverride}
             onSelectAnswer={handleSelectOverride}
             onNextQuestion={handleNextQuestion}
           />
