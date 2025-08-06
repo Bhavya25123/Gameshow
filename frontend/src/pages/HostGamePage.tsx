@@ -100,10 +100,25 @@ const HostGamePage: React.FC = () => {
       socket.emit("host-join", { gameCode });
     });
 
-    socket.on("host-joined", (gameData) => {
-      console.log("🎯 Host joined successfully! Game data:", gameData);
+    socket.on("host-joined", (data) => {
+      console.log("🎯 Host joined successfully! Game data:", data);
+      const { game: gameData, activeTeam } = data;
       setGame(gameData);
-      setControlMessage("Waiting for players to join...");
+
+      if (gameData.status === "active") {
+        if (activeTeam) {
+          const teamName = getTeamName(gameData, activeTeam);
+          setControlMessage(`Rejoined game in progress. ${teamName} goes now.`);
+        } else {
+          setControlMessage("Rejoined game in progress. Waiting for buzz.");
+        }
+      } else if (gameData.status === "round-summary") {
+        setControlMessage(
+          `Round ${gameData.currentRound} completed! Ready for next round.`
+        );
+      } else {
+        setControlMessage("Waiting for players to join...");
+      }
 
       // Request current players list
       socket.emit("get-players", { gameCode });
