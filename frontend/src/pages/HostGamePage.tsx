@@ -13,6 +13,7 @@ import PlayerList from "../components/game/PlayerList";
 import GameCreationForm from "../components/forms/GameCreationForm";
 import HostJoinForm from "../components/forms/HostJoinForm";
 import Button from "../components/common/Button";
+import Input from "../components/common/Input";
 import TurnIndicator from "../components/game/TurnIndicator";
 import RoundSummaryComponent from "../components/game/RoundSummaryComponent";
 
@@ -35,6 +36,12 @@ const HostGamePage: React.FC = () => {
   const [controlMessage, setControlMessage] = useState<string>("");
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
   const [overrideMode, setOverrideMode] = useState(false);
+  const [pendingOverride, setPendingOverride] = useState<{
+    teamId: string;
+    round: number;
+    questionNumber: number;
+  } | null>(null);
+  const [overridePoints, setOverridePoints] = useState("0");
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -164,26 +171,12 @@ const HostGamePage: React.FC = () => {
       setGame(data.game);
       setControlMessage(`❌ ${data.playerName} answered incorrectly.`);
 
-      // Prompt host for score override
-      if (window.confirm("Override score for this answer?")) {
-        const input = window.prompt("Enter points to award", "0");
-        const points = input ? parseInt(input, 10) : 0;
-        if (!isNaN(points)) {
-          const round = data.game.currentRound;
-          const teamId = data.teamId;
-          const teamKey = teamId?.includes("team1") ? "team1" : "team2";
-          const questionNumber =
-            data.game.gameState.questionsAnswered[teamKey] + 1;
-          socketRef.current?.emit("override-answer", {
-            gameCode,
-            teamId,
-            round,
-            questionNumber,
-            isCorrect: true,
-            pointsAwarded: points,
-          });
-        }
-      }
+      const round = data.game.currentRound;
+      const teamId = data.teamId;
+      const teamKey = teamId?.includes("team1") ? "team1" : "team2";
+      const questionNumber = data.game.gameState.questionsAnswered[teamKey] + 1;
+
+      setPendingOverride({ teamId, round, questionNumber });
     });
 
     socket.on("remaining-cards-revealed", (data) => {
@@ -638,6 +631,49 @@ const HostGamePage: React.FC = () => {
             onSelectAnswer={handleSelectOverride}
             onNextQuestion={handleNextQuestion}
           />
+
+          {/* Override Score Prompt */}
+          {pendingOverride && (
+            <div className="glass-card p-4 mt-2 text-center">
+              <p className="mb-3 text-slate-200">Override points for this answer?</p>
+              <div className="flex gap-2 justify-center">
+                <Input
+                  id="overridePoints"
+                  type="number"
+                  value={overridePoints}
+                  onChange={(e) => setOverridePoints(e.target.value)}
+                  className="w-24 text-center"
+                  variant="center"
+                />
+                <Button
+                  onClick={() => {
+                    const points = parseInt(overridePoints, 10) || 0;
+                    socketRef.current?.emit("override-answer", {
+                      gameCode,
+                      teamId: pendingOverride.teamId,
+                      round: pendingOverride.round,
+                      questionNumber: pendingOverride.questionNumber,
+                      isCorrect: true,
+                      pointsAwarded: points,
+                    });
+                    setPendingOverride(null);
+                    setOverridePoints("0");
+                  }}
+                  variant="primary"
+                  size="sm"
+                >
+                  Award
+                </Button>
+                <Button
+                  onClick={() => setPendingOverride(null)}
+                  variant="secondary"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Host Controls - CLEAN VERSION */}
           <div className="glass-card p-3 mt-2">
