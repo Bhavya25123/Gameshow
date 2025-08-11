@@ -22,36 +22,47 @@ const PageLayout: React.FC<PageLayoutProps> = ({
 }) => {
     const scaleRef = useAutoScale(1024, 768);
 
-    const layoutClasses = {
-      default: "min-h-screen flex flex-col gradient-bg",
-      game: "h-screen flex flex-col gradient-bg game-bg overflow-hidden",
-      fullscreen: "h-screen flex flex-col gradient-bg overflow-hidden",
-    };
+  const layoutClasses = {
+    default: "h-screen flex flex-col gradient-bg overflow-hidden",
+    game: "h-screen flex flex-col gradient-bg game-bg overflow-hidden",
+    fullscreen: "h-screen flex flex-col gradient-bg overflow-hidden",
+  };
 
-    const mainClasses = {
-      default: "flex-1 container mx-auto px-4 py-8",
-      game: "w-[1024px] h-[768px] flex flex-col md:flex-row gap-2 p-2 overflow-hidden",
-      fullscreen: "flex-1 relative overflow-hidden",
-    };
+  const mainClasses = {
+    default:
+      "w-[1024px] h-[768px] flex flex-col items-center justify-center p-4 overflow-hidden",
+    game: "w-[1024px] h-[768px] flex flex-col md:flex-row gap-2 p-2 overflow-hidden",
+    fullscreen: "flex-1 relative overflow-hidden",
+  };
 
+  if (variant === "default") {
     return (
       <div className={`${layoutClasses[variant]} ${className}`}>
-        {/* Only show header if not fullscreen variant */}
-        {variant !== "fullscreen" && <Header gameCode={gameCode} timer={timer} />}
-
-        {variant === "game" ? (
-          <div className="flex-1 flex items-center justify-center overflow-hidden">
-            <main ref={scaleRef} className={mainClasses[variant]}>
-              {children}
-            </main>
+        <div className="flex-1 flex items-center justify-center overflow-hidden">
+          <div ref={scaleRef} className="w-[1024px] h-[768px] flex flex-col">
+            <Header gameCode={gameCode} timer={timer} />
+            <main className={mainClasses[variant]}>{children}</main>
+            <Footer />
           </div>
-        ) : (
-          <main className={mainClasses[variant]}>{children}</main>
-        )}
-
-        {variant === "default" && <Footer />}
+        </div>
       </div>
     );
-  };
+  }
+
+  return (
+    <div className={`${layoutClasses[variant]} ${className}`}>
+      {variant !== "fullscreen" && <Header gameCode={gameCode} timer={timer} />}
+      {variant === "game" ? (
+        <div className="flex-1 flex items-center justify-center overflow-hidden">
+          <main ref={scaleRef} className={mainClasses[variant]}>
+            {children}
+          </main>
+        </div>
+      ) : (
+        <main className={mainClasses[variant]}>{children}</main>
+      )}
+    </div>
+  );
+};
 
 export default PageLayout;
