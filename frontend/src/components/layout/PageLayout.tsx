@@ -23,16 +23,16 @@ const PageLayout: React.FC<PageLayoutProps> = ({
     const scaleRef = useAutoScale(1024, 768);
 
   const layoutClasses = {
-    default: "h-screen flex flex-col gradient-bg overflow-hidden",
-    game: "h-screen flex flex-col gradient-bg game-bg overflow-hidden",
-    fullscreen: "h-screen flex flex-col gradient-bg overflow-hidden",
+    default: "min-h-screen flex flex-col gradient-bg",
+    game: "min-h-screen flex flex-col gradient-bg game-bg",
+    fullscreen: "min-h-screen flex flex-col gradient-bg",
   };
 
   const mainClasses = {
     default:
-      "w-[1024px] h-[768px] flex flex-col items-center justify-center p-4 overflow-hidden",
-    game: "w-[1024px] h-[768px] flex flex-col md:flex-row gap-2 p-2 overflow-hidden",
-    fullscreen: "flex-1 relative overflow-hidden",
+      "w-[1024px] h-[768px] flex flex-col items-center justify-center p-4 overflow-auto",
+    game: "w-[1024px] h-[768px] flex flex-col md:flex-row gap-2 p-2 overflow-auto",
+    fullscreen: "flex-1 relative overflow-auto",
   };
 
   if (variant === "default") {

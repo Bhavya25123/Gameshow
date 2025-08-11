@@ -14,7 +14,8 @@ export function useAutoScale(baseWidth: number, baseHeight: number) {
     const updateScale = () => {
       const scale = Math.min(
         window.innerWidth / baseWidth,
-        window.innerHeight / baseHeight
+        window.innerHeight / baseHeight,
+        1
       );
       element.style.transform = `scale(${scale})`;
       element.style.transformOrigin = 'top left';
