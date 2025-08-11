@@ -20,7 +20,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   variant = "default",
   className = "",
 }) => {
-    const scaleRef = variant === "game" ? useAutoScale(1024, 768) : undefined;
+    const scaleRef = useAutoScale(1024, 768);
 
     const layoutClasses = {
       default: "min-h-screen flex flex-col gradient-bg",
