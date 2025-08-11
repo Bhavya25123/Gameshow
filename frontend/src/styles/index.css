@@ -94,8 +94,27 @@ body {
   overflow-x: hidden;
   position: relative;
   transition: background-color 0.3s ease, color 0.3s ease;
-  font-size: 14px; /* Optimized for 1080p */
+  font-size: clamp(14px, 1.5vw, 18px); /* Responsive base font size */
   line-height: 1.4;
+}
+
+/* Responsive typography and spacing */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.375rem !important;
+  }
+  h2 {
+    font-size: 1.125rem !important;
+  }
+  h3 {
+    font-size: 0.875rem !important;
+  }
+  .glass-card {
+    padding: 0.75rem;
+  }
+  .answer-card {
+    padding: 1rem 0.75rem !important;
+  }
 }
 
 /* OPTIMIZED TYPOGRAPHY FOR 1080p */

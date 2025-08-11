@@ -226,7 +226,7 @@ const AudienceGamePage: React.FC = () => {
     const team2Answered = game.gameState.questionsAnswered.team2 || 0;
     return (
       <PageLayout gameCode={game.code} variant="game">
-        <div className="w-48 flex-shrink-0">
+        <div className="w-full md:w-48 flex-shrink-0">
           <TeamPanel
             team={game.teams[0]}
             teamIndex={0}
@@ -258,7 +258,7 @@ const AudienceGamePage: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="w-48 flex-shrink-0">
+        <div className="w-full md:w-48 flex-shrink-0">
           <TeamPanel
             team={game.teams[1]}
             teamIndex={1}
