@@ -95,6 +95,21 @@ export const getTeamColorClasses = (teamIndex: number) => {
   return colors[teamIndex] || colors[0];
 };
 
+// Get total score from all regular rounds (ignoring toss-up)
+export const getTeamRoundTotal = (team: Team): number => {
+  return team.roundScores.reduce((sum, s) => sum + s, 0);
+};
+
+// Get team display name by key
+export const getTeamName = (
+  game: Game | null,
+  teamKey: "team1" | "team2"
+): string => {
+  if (!game) return teamKey;
+  const team = game.teams.find((t) => t.id.includes(teamKey));
+  return team ? team.name : teamKey;
+};
+
 // Validate answer match
 export const levenshtein = (a: string, b: string): number => {
   const matrix = [] as number[][];

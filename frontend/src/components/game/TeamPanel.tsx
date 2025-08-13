@@ -1,6 +1,6 @@
 import React from "react";
 import { Team } from "../../types";
-import { getTeamColorClasses } from "../../utils/gameHelper";
+import { getTeamColorClasses, getTeamRoundTotal } from "../../utils/gameHelper";
 
 interface QuestionStatus {
   firstAttemptCorrect: boolean | null; // true = correct, false = incorrect, null = not attempted
@@ -60,11 +60,26 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
 
   // Get current round data
   const getCurrentRoundData = () => {
+    if (currentRound === 0) {
+      const answered = questionsAnswered > 0;
+      return [
+        {
+          firstAttemptCorrect: answered
+            ? team.currentRoundScore > 0
+            : null,
+          pointsEarned: team.currentRoundScore,
+        },
+      ];
+    }
     switch (currentRound) {
-      case 1: return questionData.round1;
-      case 2: return questionData.round2;
-      case 3: return questionData.round3;
-      default: return questionData.round1;
+      case 1:
+        return questionData.round1;
+      case 2:
+        return questionData.round2;
+      case 3:
+        return questionData.round3;
+      default:
+        return questionData.round1;
     }
   };
 
@@ -157,7 +172,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
 
   return (
     <div
-      className={`glass-card p-3 h-full flex flex-col transition-all ${
+      className={`glass-card p-3 flex flex-col transition-all h-auto md:h-full ${
         isActive ? `border-2 border-red-500` : "border border-gray-300"
       } ${
         isPlayerTeam ? "border-yellow-400/50 bg-yellow-400/10" : ""
@@ -212,7 +227,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
         {/* Current Round Question Progress */}
         <div className="glass-card p-2 mb-3 bg-gradient-to-r from-red-600/20 to-red-700/20 border-red-500/30">
           <h4 className="text-sm font-bold text-red-300 mb-2 text-center">
-            Round {currentRound}
+            {currentRound === 0 ? "Toss-up Round" : `Round ${currentRound}`}
           </h4>
           
           {/* Question Progress Indicators */}
@@ -242,7 +257,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
         {/* Total Game Score Display (BOTTOM) */}
         <div className="bg-white text-black rounded px-2 py-1 text-center">
           <div className="text-xl font-bold">
-            {team.score}
+            {getTeamRoundTotal(team)}
           </div>
           <div className="text-xs">Total Score</div>
         </div>

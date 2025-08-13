@@ -1,5 +1,6 @@
 import React from "react";
 import { Team } from "../../types";
+import { getTeamRoundTotal } from "../../utils/gameHelper";
 import StatusIndicator from "../common/StatusIndicator";
 
 interface PlayerStatusProps {
@@ -21,7 +22,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({
           {team?.name} • Round Points: {team?.currentRoundScore || 0}
         </div>
         <div className="text-sm text-slate-400 mb-3">
-          Total Game Score: {team?.score || 0}
+          Total Game Score: {team ? getTeamRoundTotal(team) : 0}
         </div>
 
         <StatusIndicator type="team-status" isActive={isActiveTeam} />

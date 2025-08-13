@@ -47,9 +47,13 @@ export function setupHostEvents(socket, io) {
       // Join the socket to the game room
       socket.join(gameCode);
 
-      // Send the updated game back to the host
+      // Send the updated game along with state details so a host can rejoin mid-game
       console.log("📤 Emitting host-joined event with game data");
-      socket.emit("host-joined", updatedGame);
+      socket.emit("host-joined", {
+        game: updatedGame,
+        currentQuestion: getCurrentQuestion(updatedGame),
+        activeTeam: updatedGame.gameState.currentTurn,
+      });
 
       console.log(`👑 Host successfully joined game: ${gameCode}`);
     } else {
@@ -177,27 +181,15 @@ export function setupHostEvents(socket, io) {
           byHost: true,
         });
 
-        // Wait a moment so players can see the revealed answers
-        setTimeout(() => {
-          const advancedGame = advanceGameState(gameCode);
-          if (advancedGame) {
-            handleGameStateAdvancement(gameCode, advancedGame, io, {
-              teamName: "Host",
-              game,
-            });
+        // Allow host to manually advance like a normal question
+        game.gameState.canAdvance = true;
+        const updatedGame = updateGame(gameCode, game);
 
-            io.to(gameCode).emit("question-forced", {
-              game: advancedGame,
-              currentQuestion: getCurrentQuestion(advancedGame),
-              activeTeam: advancedGame.gameState.currentTurn,
-              byHost: true,
-            });
-
-            console.log(
-              `⚠️ Host forced advance to question ${advancedGame.currentQuestionIndex + 1}`
-            );
-          }
-        }, 2000);
+        io.to(gameCode).emit("question-complete", {
+          game: updatedGame,
+          currentQuestion: getCurrentQuestion(updatedGame),
+        });
+        console.log(`⚠️ Host forced question completion, awaiting next command`);
       }
     }
   });

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import API from '../../services/auth';
 import { LoginCredentials, LoginResponse } from '../../types/auth';
+import { ROUTES } from '../../utils/constants';
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -219,9 +220,9 @@ const LoginForm: React.FC = () => {
           <div className="mt-6 text-center">
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               New to Sanskrit Shabd Samvad?{' '}
-              <a href="" className="text-red-600 hover:text-red-500 font-medium transition-colors">
+              <Link to={ROUTES.REGISTER} className="text-red-600 hover:text-red-500 font-medium transition-colors">
                 Create an account
-              </a>
+              </Link>
             </p>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import io, { Socket } from "socket.io-client";
 
 // Import components
@@ -21,18 +21,28 @@ import gameApi from "../services/gameApi";
 
 // Import types and utils
 import { Game, Team, RoundSummary, RoundData } from "../types";
-import { getCurrentQuestion, getGameWinner } from "../utils/gameHelper";
+import { getCurrentQuestion, getGameWinner, getTeamName } from "../utils/gameHelper";
 import { ROUTES } from "../utils/constants";
 
 const HostGamePage: React.FC = () => {
   const [gameCode, setGameCode] = useState<string>("");
   const [game, setGame] = useState<Game | null>(null);
+  const [team1Name, setTeam1Name] = useState("");
+  const [team2Name, setTeam2Name] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [controlMessage, setControlMessage] = useState<string>("");
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
   const [overrideMode, setOverrideMode] = useState(false);
+  const [pendingOverride, setPendingOverride] = useState<{
+    teamId: string;
+    round: number;
+    questionNumber: number;
+  } | null>(null);
+  const [overridePoints, setOverridePoints] = useState("0");
 
   const socketRef = useRef<Socket | null>(null);
+
+  const location = useLocation();
 
   // Hooks
   const { timer } = useTimer(game?.status === "active");
@@ -87,18 +97,28 @@ const HostGamePage: React.FC = () => {
 
       // Join as host immediately after connection
       console.log("👑 Joining as host...");
-      const defaultTeams = [
-        { name: "Team Red", members: ["", "", "", "", ""] },
-        { name: "Team Blue", members: ["", "", "", "", ""] },
-      ];
-
-      socket.emit("host-join", { gameCode, teams: defaultTeams });
+      socket.emit("host-join", { gameCode });
     });
 
-    socket.on("host-joined", (gameData) => {
-      console.log("🎯 Host joined successfully! Game data:", gameData);
+    socket.on("host-joined", (data) => {
+      console.log("🎯 Host joined successfully! Game data:", data);
+      const { game: gameData, activeTeam } = data;
       setGame(gameData);
-      setControlMessage("Waiting for players to join...");
+
+      if (gameData.status === "active") {
+        if (activeTeam) {
+          const teamName = getTeamName(gameData, activeTeam);
+          setControlMessage(`Rejoined game in progress. ${teamName} goes now.`);
+        } else {
+          setControlMessage("Rejoined game in progress. Waiting for buzz.");
+        }
+      } else if (gameData.status === "round-summary") {
+        setControlMessage(
+          `Round ${gameData.currentRound} completed! Ready for next round.`
+        );
+      } else {
+        setControlMessage("Waiting for players to join...");
+      }
 
       // Request current players list
       socket.emit("get-players", { gameCode });
@@ -107,11 +127,20 @@ const HostGamePage: React.FC = () => {
     socket.on("game-started", (data) => {
       console.log("🚀 Single-attempt game started with question tracking!");
       setGame(data.game);
-      setControlMessage(
-        `Game started! ${
-          data.activeTeam === "team1" ? "Team 1" : "Team 2"
-        } goes first. Each question allows only 1 attempt.`
-      );
+      if (data.activeTeam) {
+        const teamName = getTeamName(data.game, data.activeTeam);
+        setControlMessage(
+          `Game started! ${teamName} goes first. Each question allows only 1 attempt.`
+        );
+      } else {
+        setControlMessage("Game started! Buzz in for the toss-up question.");
+      }
+    });
+
+    socket.on("buzzer-pressed", (data) => {
+      console.log("🔔 Buzzer pressed:", data);
+      setGame(data.game);
+      setControlMessage(`Turn switched to ${data.teamName}!`);
     });
 
     socket.on("player-joined", (data) => {
@@ -147,20 +176,31 @@ const HostGamePage: React.FC = () => {
       setControlMessage(
         `✅ ${data.playerName} answered correctly! +${data.pointsAwarded} points for ${data.teamName}.`
       );
+
+      const round = data.game.currentRound;
+      const teamId = data.teamId;
+      const teamKey = teamId?.includes("team1") ? "team1" : "team2";
+      const questionNumber = data.game.gameState.questionsAnswered[teamKey] + 1;
+      setPendingOverride({ teamId, round, questionNumber });
     });
 
     socket.on("answer-incorrect", (data) => {
       console.log("❌ Incorrect answer with question tracking:", data);
       setGame(data.game);
-      setControlMessage(
-        `❌ ${data.playerName} answered incorrectly. ${data.message}`
-      );
+      setControlMessage(`❌ ${data.playerName} answered incorrectly.`);
+
+      const round = data.game.currentRound;
+      const teamId = data.teamId;
+      const teamKey = teamId?.includes("team1") ? "team1" : "team2";
+      const questionNumber = data.game.gameState.questionsAnswered[teamKey] + 1;
+
+      setPendingOverride({ teamId, round, questionNumber });
     });
 
     socket.on("remaining-cards-revealed", (data) => {
       console.log("👁️ Remaining cards revealed:", data);
       setGame(data.game);
-      setControlMessage("All remaining cards revealed!");
+      // Preserve the previous message instead of showing a new one
     });
 
     socket.on("turn-changed", (data) => {
@@ -177,6 +217,9 @@ const HostGamePage: React.FC = () => {
       } else {
         setControlMessage(`Moving to next question.`);
       }
+      setPendingOverride(null);
+      setOverrideMode(false);
+      setOverridePoints("0");
     });
 
     socket.on("question-complete", (data) => {
@@ -220,10 +263,9 @@ const HostGamePage: React.FC = () => {
       console.log("🆕 New round started:", data);
       setGame(data.game);
       setRoundSummary(null);
+      const teamName = getTeamName(data.game, data.activeTeam);
       setControlMessage(
-        `Round ${data.round} started! ${
-          data.activeTeam === "team1" ? "Team 1" : "Team 2"
-        } goes first. Each question allows only 1 attempt.`
+        `Round ${data.round} started! ${teamName} goes first. Each question allows only 1 attempt.`
       );
     });
 
@@ -261,7 +303,9 @@ const HostGamePage: React.FC = () => {
     socket.on("answer-overridden", (data) => {
       console.log("✅ Answer overridden:", data);
       setGame(data.game);
-      setControlMessage("Answer overridden by host.");
+      setControlMessage(
+        `Host awarded ${data.pointsAwarded} points to ${data.teamName}.`
+      );
       setOverrideMode(false);
     });
 
@@ -286,6 +330,16 @@ const HostGamePage: React.FC = () => {
     return socket;
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get("code");
+    if (code && !gameCode) {
+      const upper = code.toUpperCase();
+      setGameCode(upper);
+      setupSocket(upper);
+    }
+  }, [location.search, gameCode, setupSocket]);
+
   const createGame = async () => {
     console.log(
       "🎮 Creating new single-attempt game with question tracking..."
@@ -297,12 +351,17 @@ const HostGamePage: React.FC = () => {
       const testResponse = await gameApi.testConnection();
       console.log("✅ Server connection successful:", testResponse);
 
-      const response = await gameApi.createGame();
+      const response = await gameApi.createGame({
+        team1: team1Name.trim(),
+        team2: team2Name.trim(),
+      });
       console.log("✅ Game creation response:", response);
 
       const { gameCode: newGameCode } = response;
       setGameCode(newGameCode);
-      setControlMessage(`Game created successfully! Code: ${newGameCode}. Each question allows only 1 attempt.`);
+      setControlMessage(
+        `Game created successfully! Code: ${newGameCode}. Each question allows only 1 attempt.`
+      );
 
       setupSocket(newGameCode);
     } catch (error: unknown) {
@@ -356,39 +415,53 @@ const HostGamePage: React.FC = () => {
   };
 
   const handleOverrideAnswer = () => {
-    if (game) {
+    if (pendingOverride) {
       setOverrideMode(true);
-      setControlMessage("Select the correct answer");
+      setControlMessage("");
+      setOverridePoints("0");
     }
   };
 
   const handleSelectOverride = (answerIndex: number) => {
-    if (game && socketRef.current) {
-      const teamKey = game.gameState.currentTurn as "team1" | "team2";
-      const teamId = game.teams.find((t) =>
-        teamKey === "team1" ? t.id.includes("team1") : t.id.includes("team2")
-      )?.id;
-      if (!teamId) return;
-      const questionNumber = game.gameState.questionsAnswered[teamKey] + 1;
-      const currentQuestion = getCurrentQuestion(game);
-      if (!currentQuestion) return;
-      const answer = currentQuestion.answers[answerIndex];
-      const points =
-        game.currentRound === 0 ? answer.score : answer.score * game.currentRound;
-
+    if (pendingOverride && socketRef.current && currentQuestion) {
+      const points = currentQuestion.answers[answerIndex]?.score || 0;
       socketRef.current.emit("override-answer", {
         gameCode,
-        teamId,
-        round: game.currentRound,
-        questionNumber,
+        teamId: pendingOverride.teamId,
+        round: pendingOverride.round,
+        questionNumber: pendingOverride.questionNumber,
         isCorrect: true,
         pointsAwarded: points,
         answerIndex,
       });
-
+      setPendingOverride(null);
       setOverrideMode(false);
+      setOverridePoints("0");
       setControlMessage("");
     }
+  };
+
+  const handleConfirmOverride = () => {
+    if (pendingOverride && socketRef.current) {
+      const points = parseInt(overridePoints, 10) || 0;
+      socketRef.current.emit("override-answer", {
+        gameCode,
+        teamId: pendingOverride.teamId,
+        round: pendingOverride.round,
+        questionNumber: pendingOverride.questionNumber,
+        isCorrect: true,
+        pointsAwarded: points,
+      });
+      setPendingOverride(null);
+      setOverrideMode(false);
+      setOverridePoints("0");
+      setControlMessage("");
+    }
+  };
+
+  const handleCancelOverride = () => {
+    setOverrideMode(false);
+    setOverridePoints("0");
   };
 
 
@@ -432,7 +505,16 @@ const HostGamePage: React.FC = () => {
   if (!gameCode) {
     return (
       <PageLayout>
-        <GameCreationForm onCreateGame={createGame} isLoading={isLoading} />
+        <div className="flex justify-center">
+          <GameCreationForm
+            team1Name={team1Name}
+            team2Name={team2Name}
+            onTeam1Change={setTeam1Name}
+            onTeam2Change={setTeam2Name}
+            onCreateGame={createGame}
+            isLoading={isLoading}
+          />
+        </div>
         {controlMessage && (
           <div className="mt-4 text-center">
             <div className="text-blue-400">{controlMessage}</div>
@@ -535,7 +617,7 @@ const HostGamePage: React.FC = () => {
     return (
       <PageLayout gameCode={gameCode} timer={timer} variant="game">
         {/* Left Team Panel with Question Data */}
-        <div className="w-48 flex-shrink-0">
+        <div className="w-full md:w-48 flex-shrink-0">
           <TeamPanel
             team={game.teams[0]}
             teamIndex={0}
@@ -567,9 +649,14 @@ const HostGamePage: React.FC = () => {
             isHost={true}
             controlMessage={controlMessage}
             overrideMode={overrideMode}
+            overridePoints={overridePoints}
+            onOverridePointsChange={setOverridePoints}
+            onCancelOverride={handleCancelOverride}
+            onConfirmOverride={handleConfirmOverride}
             onSelectAnswer={handleSelectOverride}
             onNextQuestion={handleNextQuestion}
           />
+
 
           {/* Host Controls - CLEAN VERSION */}
           <div className="glass-card p-3 mt-2">
@@ -594,14 +681,16 @@ const HostGamePage: React.FC = () => {
               >
                 ⏭️ Force Next
               </Button>
-              <Button
-                onClick={handleOverrideAnswer}
-                variant="secondary"
-                size="sm"
-                className="text-xs py-1 px-3"
-              >
-                ✅ Override
-              </Button>
+              {pendingOverride && !overrideMode && (
+                <Button
+                  onClick={handleOverrideAnswer}
+                  variant="secondary"
+                  size="sm"
+                  className="text-xs py-1 px-3"
+                >
+                  ✅ Override
+                </Button>
+              )}
               <Button
                 onClick={handleResetGame}
                 variant="secondary"
@@ -615,7 +704,7 @@ const HostGamePage: React.FC = () => {
         </div>
 
         {/* Right Team Panel with Question Data */}
-        <div className="w-48 flex-shrink-0">
+        <div className="w-full md:w-48 flex-shrink-0">
           <TeamPanel
             team={game.teams[1]}
             teamIndex={1}

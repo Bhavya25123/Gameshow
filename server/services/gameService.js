@@ -125,17 +125,34 @@ export function calculateRoundSummary(game) {
     (t) => t.id.includes("team2") || t.name.includes("2")
   );
 
+  const team1BaseTotal = team1.roundScores.reduce((sum, s) => sum + s, 0);
+  const team2BaseTotal = team2.roundScores.reduce((sum, s) => sum + s, 0);
+
+  const includeCurrentRound =
+    game.status === "round-summary" && round > 0;
+
+  const team1Total =
+    team1BaseTotal +
+    (includeCurrentRound && team1.roundScores[round - 1] === 0
+      ? team1.currentRoundScore
+      : 0);
+  const team2Total =
+    team2BaseTotal +
+    (includeCurrentRound && team2.roundScores[round - 1] === 0
+      ? team2.currentRoundScore
+      : 0);
+
   return {
     round,
     teamScores: {
       team1: {
         roundScore: team1.currentRoundScore,
-        totalScore: team1.score,
+        totalScore: team1Total,
         teamName: team1.name,
       },
       team2: {
         roundScore: team2.currentRoundScore,
-        totalScore: team2.score,
+        totalScore: team2Total,
         teamName: team2.name,
       },
     },
@@ -174,13 +191,13 @@ export function calculateTossUpSummary(game) {
     teamScores: {
       team1: {
         roundScore: team1Answer ? team1Answer.score : 0,
-        totalScore: team1 ? team1.score : 0,
-        teamName: team1 ? team1.name : "Team 1",
+        totalScore: team1 ? team1.roundScores.reduce((sum, s) => sum + s, 0) : 0,
+        teamName: team1 ? team1.name : "",
       },
       team2: {
         roundScore: team2Answer ? team2Answer.score : 0,
-        totalScore: team2 ? team2.score : 0,
-        teamName: team2 ? team2.name : "Team 2",
+        totalScore: team2 ? team2.roundScores.reduce((sum, s) => sum + s, 0) : 0,
+        teamName: team2 ? team2.name : "",
       },
     },
     questionsAnswered: {
@@ -245,7 +262,7 @@ export function updateTeamActiveStatus(game) {
 }
 
 // Create a new game (SINGLE ATTEMPT + Question Data)
-export async function createGame(updatedQuestions, tossUpQuestion) {
+export async function createGame(updatedQuestions, tossUpQuestion, teamNames) {
   const gameCode = generateGameCode();
   const gameId = uuidv4();
 
@@ -263,7 +280,7 @@ export async function createGame(updatedQuestions, tossUpQuestion) {
     teams: [
       {
         id: uuidv4() + "_team1",
-        name: "Team 1",
+        name: teamNames?.team1 || "Team 1",
         score: 0,
         active: false,
         members: [],
@@ -272,7 +289,7 @@ export async function createGame(updatedQuestions, tossUpQuestion) {
       },
       {
         id: uuidv4() + "_team2",
-        name: "Team 2",
+        name: teamNames?.team2 || "Team 2",
         score: 0,
         active: false,
         members: [],
@@ -321,7 +338,8 @@ export function startGame(gameCode) {
   if (!game) return null;
 
   game.status = "active";
-  game.gameState.currentTurn = "team1"; // Team 1 starts
+  // No team is active during the toss-up until a buzz occurs
+  game.gameState.currentTurn = null;
   game.gameState.awaitingAnswer = true;
   game.gameState.canAdvance = false;
 
@@ -816,8 +834,11 @@ export function getGameWinner(game) {
 
   if (!team1 || !team2) return null;
 
-  if (team1.score > team2.score) return team1;
-  if (team2.score > team1.score) return team2;
+  const team1Total = team1.roundScores.reduce((sum, s) => sum + s, 0);
+  const team2Total = team2.roundScores.reduce((sum, s) => sum + s, 0);
+
+  if (team1Total > team2Total) return team1;
+  if (team2Total > team1Total) return team2;
   return null; // Tie
 }
 

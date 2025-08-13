@@ -339,8 +339,12 @@ export function setupPlayerEvents(socket, io) {
       return;
     }
 
-    // Register the team that buzzed
+    // Register the team that buzzed and make them active
     game.buzzedTeamId = player.teamId;
+    game.activeTeamId = player.teamId;
+    game.gameState.currentTurn = player.teamId.includes("team1")
+      ? "team1"
+      : "team2";
     game.teams.forEach((t) => (t.active = t.id === player.teamId));
     const updatedGame = updateGame(gameCode, game);
 

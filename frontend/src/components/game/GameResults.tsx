@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Team } from "../../types";
 import { ROUTES } from "../../utils/constants";
+import { getTeamRoundTotal } from "../../utils/gameHelper";
 import AnimatedCard from "../common/AnimatedCard";
 import Button from "../common/Button";
 
@@ -26,10 +27,13 @@ const GameResults: React.FC<GameResultsProps> = ({
     return 'tie'; // Tie
   };
 
-  // Calculate final winner
+  // Helper to get total score excluding toss-up
+  const getTeamTotal = (team: Team) => getTeamRoundTotal(team);
+
+  // Calculate final winner using only round scores
   const getFinalWinner = () => {
-    const team1Total = teams[0].score;
-    const team2Total = teams[1].score;
+    const team1Total = getTeamTotal(teams[0]);
+    const team2Total = getTeamTotal(teams[1]);
     
     if (team1Total > team2Total) return 0; // Team 1 wins
     if (team2Total > team1Total) return 1; // Team 2 wins
@@ -55,31 +59,32 @@ const GameResults: React.FC<GameResultsProps> = ({
                 <div className="flex justify-center items-center gap-8">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{teams[0].name}</div>
-                    <div className="text-xl">{teams[0].score} points</div>
+                    <div className="text-xl">{getTeamTotal(teams[0])} points</div>
                   </div>
                   <div className="text-3xl">👑</div>
                   <div className="text-3xl">👑</div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">{teams[1].name}</div>
-                    <div className="text-xl">{teams[1].score} points</div>
+                    <div className="text-xl">{getTeamTotal(teams[1])} points</div>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black p-6 rounded-2xl mb-4">
                 <h2 className="text-4xl font-bold mb-2">🏆 WINNER 🏆</h2>
-                <p className="text-3xl font-bold">{teams[finalWinner].name}</p>
-                <p className="text-xl mt-2">Final Score: {teams[finalWinner].score} points</p>
+                <p className="text-3xl font-bold">{teams[(finalWinner as number)].name}</p>
+                <p className="text-xl mt-2">Final Score: {getTeamTotal(teams[finalWinner as number])} points</p>
               </div>
             )}
           </div>
 
           {/* DETAILED TEAM SUMMARY */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {teams
-              .sort((a, b) => b.score - a.score)
+            {([...teams]
+              .sort((a, b) => getTeamTotal(b) - getTeamTotal(a)))
               .map((team, index) => {
-                const isWinner = finalWinner !== 'tie' && index === 0;
+                const isWinner =
+                  finalWinner !== 'tie' && team.id === teams[finalWinner as number]?.id;
                 const isTie = finalWinner === 'tie';
                 
                 return (
@@ -100,7 +105,7 @@ const GameResults: React.FC<GameResultsProps> = ({
                       </h3>
                       
                       <div className="text-3xl font-bold mb-4 text-yellow-400">
-                        {team.score} points
+                        {getTeamTotal(team)} points
                       </div>
 
                       {/* Round breakdown for this team */}

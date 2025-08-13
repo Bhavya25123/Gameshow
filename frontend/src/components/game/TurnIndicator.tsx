@@ -36,7 +36,8 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
             🎯 {activeTeam?.name}'s Turn
           </h3>
           <p className="text-sm text-slate-300">
-            Question {questionNumber} of 3 • Round {round}
+            Question {questionNumber} of {round === 0 ? 1 : 3} •{' '}
+            {round === 0 ? 'Toss-up Round' : `Round ${round}`}
           </p>
           <p className="text-xs text-slate-400 mt-1">
             {waitingTeam?.name} is waiting
@@ -60,13 +61,15 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
           <div className="bg-slate-700/30 rounded-lg p-3">
             <div className="text-lg font-semibold text-slate-300">Round</div>
-            <div className="text-2xl font-bold text-orange-400">{round}</div>
+            <div className="text-2xl font-bold text-orange-400">
+              {round === 0 ? 'Toss-up' : round}
+            </div>
           </div>
 
           <div className="bg-slate-700/30 rounded-lg p-3">
             <div className="text-lg font-semibold text-slate-300">Question</div>
             <div className="text-2xl font-bold text-blue-400">
-              {questionNumber} of 3
+              {questionNumber} of {round === 0 ? 1 : 3}
             </div>
           </div>
 
@@ -80,7 +83,7 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
 
         <div className="mt-4 text-sm text-slate-400">
           {waitingTeam?.name} will answer after {activeTeam?.name} completes
-          their 3 questions
+          {round === 0 ? ' the toss-up question' : ' their 3 questions'}
         </div>
 
         {/* Progress Bar for Current Team */}
@@ -89,7 +92,8 @@ const TurnIndicator: React.FC<TurnIndicatorProps> = ({
             {activeTeam?.name} Progress
           </div>
           <div className="flex justify-center space-x-2">
-            {[1, 2, 3].map((qNum) => (
+            {Array.from({ length: round === 0 ? 1 : 3 }, (_, i) => i + 1).map(
+              (qNum) => (
               <div
                 key={qNum}
                 className={`w-4 h-4 rounded-full ${
