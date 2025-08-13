@@ -59,7 +59,7 @@ const AnswerInput: React.FC<AnswerInputProps> = ({
               : "border-slate-400 bg-slate-50/5 opacity-60"
           }`}
           disabled={!canSubmit}
-          autoFocus={!!canSubmit}
+          autoFocus={canSubmit}
         />
 
         {isMyTeam && (
