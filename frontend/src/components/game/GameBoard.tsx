@@ -76,28 +76,31 @@ const GameBoard: React.FC<GameBoardProps> = ({
   if (variant === "player") {
     return (
       <div className="flex-1 flex flex-col overflow-y-auto">
-        {/* Question Header - Compact with Round Status */}
-        <div className="glass-card question-header flex-shrink-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="font-bold">
-                {game.currentRound === 0
-                  ? 'Toss-up Round'
-                  : `Round ${game.currentRound}`} •{' '}
-                {currentQuestion.questionCategory}
-              </h2>
-              <div className="text-xs text-slate-400">
-                Question {game.currentRound === 0 ? 1 : game.currentQuestionIndex + 1} of{' '}
-                {game.currentRound === 0 ? 1 : game.questions.length}
+        {/* Keep question visible on mobile by sticking it to the top */}
+        <div className="sticky top-0 z-10">
+          {/* Question Header - Compact with Round Status */}
+          <div className="glass-card question-header flex-shrink-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="font-bold">
+                  {game.currentRound === 0
+                    ? 'Toss-up Round'
+                    : `Round ${game.currentRound}`} •{' '}
+                  {currentQuestion.questionCategory}
+                </h2>
+                <div className="text-xs text-slate-400">
+                  Question {game.currentRound === 0 ? 1 : game.currentQuestionIndex + 1} of{' '}
+                  {game.currentRound === 0 ? 1 : game.questions.length}
+                </div>
               </div>
+              <RoundStatus />
             </div>
-            <RoundStatus />
           </div>
-        </div>
 
-        {/* Question Text - Compact */}
-        <div className="glass-card question-card flex-shrink-0">
-          <h2 className="text-center">{currentQuestion.question}</h2>
+          {/* Question Text - Compact */}
+          <div className="glass-card question-card flex-shrink-0">
+            <h2 className="text-center">{currentQuestion.question}</h2>
+          </div>
         </div>
 
         {/* Answer Grid - Vertical Layout */}
@@ -144,28 +147,31 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   return (
       <div className="flex-1 flex flex-col overflow-y-auto">
-      {/* Question Header with Round Status */}
-      <div className="glass-card question-header flex-shrink-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="font-bold">
-              {game.currentRound === 0
-                ? 'Toss-up Round'
-                : `Round ${game.currentRound}`} •{' '}
-              {currentQuestion.questionCategory}
-            </h2>
-            <div className="text-xs text-slate-400">
-              Question {game.currentRound === 0 ? 1 : game.currentQuestionIndex + 1} of{' '}
-              {game.currentRound === 0 ? 1 : game.questions.length}
+      {/* Keep question visible on mobile by sticking it to the top */}
+      <div className="sticky top-0 z-10">
+        {/* Question Header with Round Status */}
+        <div className="glass-card question-header flex-shrink-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="font-bold">
+                {game.currentRound === 0
+                  ? 'Toss-up Round'
+                  : `Round ${game.currentRound}`} •{' '}
+                {currentQuestion.questionCategory}
+              </h2>
+              <div className="text-xs text-slate-400">
+                Question {game.currentRound === 0 ? 1 : game.currentQuestionIndex + 1} of{' '}
+                {game.currentRound === 0 ? 1 : game.questions.length}
+              </div>
             </div>
+            <RoundStatus />
           </div>
-          <RoundStatus />
         </div>
-      </div>
 
-      {/* Question Text */}
-      <div className="glass-card question-card flex-shrink-0">
-        <h2 className="text-center">{currentQuestion.question}</h2>
+        {/* Question Text */}
+        <div className="glass-card question-card flex-shrink-0">
+          <h2 className="text-center">{currentQuestion.question}</h2>
+        </div>
       </div>
 
       {/* Answer Grid - Vertical Layout for Host - Only 3 answers, Host sees all */}
