@@ -617,7 +617,7 @@ const HostGamePage: React.FC = () => {
     return (
       <PageLayout gameCode={gameCode} timer={timer} variant="game">
         {/* Left Team Panel with Question Data */}
-        <div className="w-48 flex-shrink-0">
+        <div className="w-full md:w-48 md:flex-shrink-0">
           <TeamPanel
             team={game.teams[0]}
             teamIndex={0}
@@ -631,7 +631,7 @@ const HostGamePage: React.FC = () => {
         </div>
 
         {/* Center Game Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           {/* Turn Indicator */}
           <TurnIndicator
             currentTeam={game.gameState.currentTurn}
@@ -704,7 +704,7 @@ const HostGamePage: React.FC = () => {
         </div>
 
         {/* Right Team Panel with Question Data */}
-        <div className="w-48 flex-shrink-0">
+        <div className="w-full md:w-48 md:flex-shrink-0">
           <TeamPanel
             team={game.teams[1]}
             teamIndex={1}

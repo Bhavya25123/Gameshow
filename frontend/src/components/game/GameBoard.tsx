@@ -75,9 +75,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   if (variant === "player") {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Question Header - Compact with Round Status */}
-        <div className="glass-card question-header bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
+        <div className="glass-card question-header flex-shrink-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="font-bold">
@@ -96,7 +96,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </div>
 
         {/* Question Text - Compact */}
-        <div className="glass-card question-card">
+        <div className="glass-card question-card flex-shrink-0">
           <h2 className="text-center">{currentQuestion.question}</h2>
         </div>
 
@@ -143,9 +143,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-y-auto">
       {/* Question Header with Round Status */}
-      <div className="glass-card question-header bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
+      <div className="glass-card question-header flex-shrink-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="font-bold">
@@ -164,7 +164,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       </div>
 
       {/* Question Text */}
-      <div className="glass-card question-card">
+      <div className="glass-card question-card flex-shrink-0">
         <h2 className="text-center">{currentQuestion.question}</h2>
       </div>
 
